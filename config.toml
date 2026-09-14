@@ -79,6 +79,19 @@ browser_theme_color = ["#ffffff", "#1f1f1f"]
 override_serif_with_sans = true        # sans reads better for technical posts
 stylesheets = ["custom.css"]
 
+# Giscus loads a script and an iframe from giscus.app. tabi sets
+# enable_csp = true with script-src 'self', so without this the comment
+# widget is blocked silently — nothing renders, only a console error.
+# These are tabi's defaults plus giscus.app.
+allowed_domains = [
+    { directive = "font-src", domains = ["'self'", "data:"] },
+    { directive = "img-src", domains = ["'self'", "https://*", "data:"] },
+    { directive = "media-src", domains = ["'self'", "https://cdn.jsdelivr.net/"] },
+    { directive = "script-src", domains = ["'self'", "https://giscus.app"] },
+    { directive = "style-src", domains = ["'self'"] },
+    { directive = "frame-src", domains = ["https://giscus.app", "player.vimeo.com", "https://www.youtube-nocookie.com"] },
+]
+
 # --- code blocks: the whole point of this site ------------------------------
 copy_button = true
 code_block_name_links = true
@@ -153,3 +166,18 @@ service = "plausible"
 # is derived from base_url, the change at the top of this file handles it; if
 # it is hardcoded in your analytics.html, edit it there. A mismatch means
 # events are accepted and silently discarded.
+[extra.giscus]
+enabled_for_all_posts = true
+automatic_loading = true
+repo = "jon6fingrs/thehelpfulidiot-site"
+repo_id = "R_kgDOUbFZPA"
+category = "Announcements"
+category_id = "DIC_kwDOUbFZPM4DFnYB"
+mapping = "slug"
+strict_title_matching = 1
+enable_reactions = 1
+comment_box_above_comments = false
+light_theme = "noborder_light"
+dark_theme = "noborder_dark"
+lang = ""
+lazy_loading = true
