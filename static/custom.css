@@ -1,0 +1,17 @@
+/* Long shell output is common here; keep code blocks scrollable, not wrapped. */
+pre { overflow-x: auto; }
+pre code { white-space: pre; }
+
+/* WordPress screenshots vary wildly in size. */
+article img { max-width: 100%; height: auto; border-radius: 4px; }
+article figure { margin-inline: 0; }
+
+/* Categories and tags now both appear in the post listing (see the
+   list_posts.html override). Distinguish the category chip so the two
+   kinds of link don't read as one undifferentiated pile. */
+.bloglist-tags .category-chip {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+}

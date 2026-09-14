@@ -1,0 +1,6 @@
+{#- Plausible, proxied first-party through nginx. Overrides tabi's partial. -#}
+{#- The init lives in a file, not inline: tabi's CSP sets script-src 'self', -#}
+{#- which blocks inline scripts. Both deferred, so init runs before the      -#}
+{#- tracker (defer preserves document order; async would be a race).         -#}
+<script defer src="{{ get_url(path='js/vxinit.js', trailing_slash=false) | safe }}"></script>
+<script defer src="{{ get_url(path='js/vx.js', trailing_slash=false) | safe }}"></script>

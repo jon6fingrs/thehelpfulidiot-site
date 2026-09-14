@@ -1,0 +1,155 @@
+# The Helpful Idiot — Zola configuration
+# Production: https://thehelpfulidiot.com
+#
+# CUTOVER REVISION. Changes from the staging version:
+#   1. base_url  -> the apex. This is the one that matters: it is compiled
+#      into canonical tags, Open Graph URLs, the sitemap and both feeds at
+#      BUILD time, so the build container must be restarted after this edit.
+#   2. Dropped the synology.regester.lan link_checker skip — no content file
+#      references that host any more (patch 3 replaced all six images).
+#   3. footer_menu "RSS" now points at rss.xml rather than atom.xml, matching
+#      both the link's label and nginx's /feed -> /rss.xml redirect.
+base_url = "https://thehelpfulidiot.com"
+title = "The Helpful Idiot"
+description = "Idiots don't have time for cable management."
+author = "thehelpfulidiot"
+
+theme = "tabi"
+default_language = "en"
+
+compile_sass = true
+minify_html = true
+generate_feeds = true
+feed_filenames = ["atom.xml", "rss.xml"]
+build_search_index = true
+
+# Singular names on purpose: Zola emits /category/<slug>/ and /tag/<slug>/,
+# which is byte-identical to the WordPress archive URLs. Verified against the
+# WordPress sitemap: 3 category and 20 tag archives, all preserved.
+# NOTE: tabi's own templates look for the PLURAL `tags`, so the overrides in
+# templates/page.html and templates/components/list_posts.html exist to read
+# these singular names. Don't rename these without updating both.
+taxonomies = [
+    { name = "category", feed = true, paginate_by = 10 },
+    { name = "tag", feed = true, paginate_by = 10 },
+]
+
+[search]
+index_format = "elasticlunr_json"
+include_title = true
+include_description = true
+include_path = true
+include_content = true
+
+[markdown]
+smart_punctuation = false      # posts already contain curly quotes from WordPress
+bottom_footnotes = true
+external_links_class = "external"
+external_links_target_blank = false
+github_alerts = true
+
+[markdown.highlighting]
+theme = "catppuccin-frappe"
+style = "inline"
+# 110 code blocks came out of WordPress with no language attribute. Leaving this
+# false means unlabelled fences render plain instead of failing the build, so you
+# can add languages post by post without breaking deploys.
+error_on_missing_language = false
+
+[link_checker]
+internal_level = "warn"
+external_level = "warn"
+skip_anchor_prefixes = ["https://github.com/"]
+skip_prefixes = [
+    "https://amzn.to",                 # affiliate shorteners rate-limit checkers
+    "https://s.click.aliexpress.com",
+]
+# Removed: "https://synology.regester.lan" — the six LAN-only image URLs it
+# covered were replaced with local files under
+# static/wp-content/uploads/2021/11/. If you have NOT yet applied that patch,
+# add the line back; otherwise the checker emits six warnings. It is warn-level
+# either way, so the build still succeeds.
+
+[extra]
+# --- appearance -------------------------------------------------------------
+theme_switcher = true
+default_theme = "dark"
+skin = "teal"
+browser_theme_color = ["#ffffff", "#1f1f1f"]
+override_serif_with_sans = true        # sans reads better for technical posts
+stylesheets = ["custom.css"]
+
+# --- code blocks: the whole point of this site ------------------------------
+copy_button = true
+code_block_name_links = true
+force_codeblock_ltr = true
+
+# --- post metadata ----------------------------------------------------------
+show_author = false
+show_date = true
+show_reading_time = true
+post_listing_date = "both"
+show_previous_next_article_links = true
+long_date_format = "MMMM d, y"
+short_date_format = "y-MM-dd"
+
+# --- feeds / discovery ------------------------------------------------------
+feed_icon = true
+quick_navigation_buttons = true
+toc = true
+hide_table_of_contents_on_mobile = false
+
+# --- off for now ------------------------------------------------------------
+show_remote_changes = false
+show_remote_source = false
+iine = false                           # no comments on this site
+
+# --- footer -----------------------------------------------------------------
+footer_menu = [
+    { url = "about", name = "About", trailing_slash = false },
+    { url = "archive", name = "Archive", trailing_slash = false },
+    { url = "rss.xml", name = "RSS", trailing_slash = false },
+]
+
+[[extra.menu]]
+name = "Series"
+url = "series"
+trailing_slash = false
+
+[[extra.menu]]
+name = "Archive"
+url = "archive"
+trailing_slash = false
+
+[[extra.menu]]
+name = "Categories"
+url = "category"
+trailing_slash = false
+
+[[extra.menu]]
+name = "Tags"
+url = "tag"
+trailing_slash = false
+
+[[extra.menu]]
+name = "About"
+url = "about"
+trailing_slash = false
+
+[extra.analytics]
+service = "plausible"
+# The first-party Plausible paths (/js/vx.js and /vx/event) are not tabi
+# defaults, so they come from your own templates/partials/analytics.html,
+# which shadows the theme's. Nothing more is needed here.
+#
+# BEFORE CUTOVER, confirm the emitted script tag is right — this is the one
+# failure mode in the whole migration that produces no error anywhere, just
+# an empty dashboard:
+#
+#     grep -o '<script[^>]*vx\.js[^>]*>' public/index.html
+#     grep -o 'data-domain="[^"]*"'      public/index.html
+#
+# data-domain must match the site name registered in Plausible EXACTLY. If it
+# is derived from base_url, the change at the top of this file handles it; if
+# it is hardcoded in your analytics.html, edit it there. A mismatch means
+# events are accepted and silently discarded.

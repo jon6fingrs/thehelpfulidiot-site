@@ -1,0 +1,16 @@
+# Zola build output — regenerated on every build
+/public/
+.zola-cache/
+/static/processed_images/
+
+# Deployment config: contains the internal Plausible hostname and the
+# obfuscated tracker path. Remove this line to commit it instead.
+nginx.conf
+
+# backups / editor / OS noise
+*.bak
+.DS_Store
+*.swp
+*~
+.direnv/
+result
