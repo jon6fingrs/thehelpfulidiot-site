@@ -10,7 +10,7 @@ category = ["Self Hosting"]
 tag = ["data hoarder", "email"]
 +++
 
-### UPDATE: [PART 3 ](/making-an-automatic-email-backup-part-3)has instructions for email backup using pre-made docker images based on this post and Part 1.
+### UPDATE: [PART 3](/making-an-automatic-email-backup-part-3) has instructions for email backup using pre-made docker images based on this post and Part 1.
 
 [<--- Part 1](/making-an-automatic-email-backup)
 
@@ -80,7 +80,7 @@ Ctrl+X, Y, enter.
 
 Now your certificate and key files are at the following locations, respectively:
 
-```
+```text
 /etc/dovecot/ssl/email.pem
 /etc/dovecot/ssl/email.key
 ```
@@ -107,7 +107,7 @@ Change "ssl = yes" to "ssl = required" towards the top.
 
 Then you should see "ssl_cert" and "ssl_key" entries near the top as well. Change those to the appropriate file locations, but do not remove the "<" before each file path as this tells Dovecot to read the contents of the files and not just the file names.
 
-```
+```ini
 ssl_cert = </etc/dovecot/ssl/email.pem
 ssl_key = </etc/dovecot/ssl/email.key
 ```
@@ -120,13 +120,13 @@ sudo nano /usr/share/dovecot/dovecot-openssl.cnf
 
 Change the following line from:
 
-```
+```ini
 commonName = @commonName@
 ```
 
 to:
 
-```
+```ini
 commonName = imap.thehelpfulidiot.lan
 ```
 
@@ -134,13 +134,13 @@ Now, assuming you have installed your root certificate on your devices, connecti
 
 ## Installing Roundcube
 
-Next, wouldn't it be cool to be able to access this email from a nice Web GUI? Roundcube is a great way to do that and is something else which can be hosted internally. Even better, it comes as a [Docker](https://hub.docker.com/r/roundcube/roundcubemail/)[ ](https://hub.docker.com/r/roundcube/roundcubemail/)[image](https://hub.docker.com/r/roundcube/roundcubemail/).
+Next, wouldn't it be cool to be able to access this email from a nice Web GUI? Roundcube is a great way to do that and is something else which can be hosted internally. Even better, it comes as a [Docker](https://hub.docker.com/r/roundcube/roundcubemail/)[](https://hub.docker.com/r/roundcube/roundcubemail/)[image](https://hub.docker.com/r/roundcube/roundcubemail/).
 
-I use [Portainer ](https://docs.portainer.io/v/ce-2.9/start/intro)to easily spin up docker compose files and recommend it to anyone for simple Docker management.
+I use [Portainer](https://docs.portainer.io/v/ce-2.9/start/intro) to easily spin up docker compose files and recommend it to anyone for simple Docker management.
 
 Create a new stack called "Roundcube" and use the following docker compose file, edited as necessary for your setup:
 
-```
+```yaml
 version: '2'
 
 services:
@@ -198,7 +198,7 @@ sudo nano config.inc.php
 
 you should see the following:
 
-```
+```php
 <?php
     $config['plugins'] = [];
     $config['log_driver'] = 'stdout';
@@ -209,7 +209,7 @@ you should see the following:
 
 Just below that, add the following:
 
-```
+```php
     $config['enable_caching'] = false;
     $config['imap_conn_options'] = array(
       'ssl'         => array(
@@ -230,7 +230,7 @@ Almost done.
 
 Now log into Roundcube using the credentials for your Linux username and password from your email backup container.
 
-![](/wp-content/uploads/2021/10/image-12.png)
+![Roundcube Login Screen](/wp-content/uploads/2021/10/image-12.png)
 *Roundcube Login Screen*
 
 Go to Settings --> Identities --> and select the User which is probably something like "thehelpfulidiot@imap.thehelpfulidiot.lan". If we send an email from roundcube, we don't want that to be the identity the recipients see.

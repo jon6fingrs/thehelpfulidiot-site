@@ -3,7 +3,7 @@ title = "UPDATE: A Wired Sonoff Zigbee Alternative"
 date = 2021-10-15
 updated = 2024-04-15
 path = "update-a-wired-sonoff-zigbee-alternative"
-description = "So while the documentation in the initial post on how to compile and flash Tasmota to the ZB-GW03 works, there is a bug when using the Tasmotized device…"
+description = "A pair of Tasmota rules that work around the ZB-GW03 failing to reconnect to Home Assistant's ZHA after a power loss."
 
 [taxonomies]
 category = ["Smart Home"]
@@ -44,7 +44,7 @@ If you prefer, you can just download the updated firmware below:
 
 Once you have the new firmware installed, you can use the following rules:
 
-```
+```text
 backlog rule1 on system#boot do backlog wifi 0; TCPStart 8888 endon; rule1 on
 backlog rule2 on Info3#RestartReason=Vbat power on reset do module 3 endon; rule2 on
 backlog rule3 on ZbState#Message=Started do module 2 endon; rule3 on
@@ -52,7 +52,7 @@ backlog rule3 on ZbState#Message=Started do module 2 endon; rule3 on
 
 The first rule combines rules 1 and 2 from the initial post and sets up the Zigbee Web Server and turns off wifi. If you intend to use wifi (which I probably wouldn't recommend), just use the following instead for the first rule:
 
-```
+```text
 backlog rule1 on system#boot do TCPStart 8888 endon; rule1 on
 ```
 

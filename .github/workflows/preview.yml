@@ -1,0 +1,70 @@
+# Builds the site and publishes it to GitHub Pages as a PREVIEW:
+#   https://jon6fingrs.github.io/thehelpfulidiot-site/
+#
+# Production is still the nginx container on net-server; this does not touch
+# it. The preview is noindex'd and has analytics stripped (see
+# .github/scripts/preview-fixup.py).
+#
+# One-time setup in the repo settings:
+#   1. Settings → Pages → Build and deployment → Source: "GitHub Actions".
+#   2. Settings → Environments → github-pages → Deployment branches:
+#      add `claude/*` (GitHub only allows the default branch by default).
+#
+# Runs on every push to main or a claude/* branch, or by hand from the
+# Actions tab ("Run workflow", pick a branch). Whichever ran last is live.
+name: Preview on GitHub Pages
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-preview
+  cancel-in-progress: true
+
+env:
+  ZOLA_VERSION: "0.23.6"   # keep in step with README / theme.toml min_version
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Zola
+        run: |
+          curl -sSL "https://github.com/getzola/zola/releases/download/v${ZOLA_VERSION}/zola-v${ZOLA_VERSION}-x86_64-unknown-linux-gnu.tar.gz" \
+            | tar xz -C /usr/local/bin zola
+          zola --version
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build
+        run: zola build --base-url "${{ steps.pages.outputs.base_url }}"
+
+      - name: Internal link check
+        run: zola check --skip-external-links
+
+      - name: Adapt for the Pages subfolder
+        run: python3 .github/scripts/preview-fixup.py public "${{ steps.pages.outputs.base_path }}"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

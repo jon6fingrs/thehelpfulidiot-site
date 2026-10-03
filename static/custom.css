@@ -6,6 +6,28 @@ pre code { white-space: pre; }
 article img { max-width: 100%; height: auto; border-radius: 4px; }
 article figure { margin-inline: 0; }
 
+/* Post images. Most were portrait phone photos or full-size screenshots that
+   rendered several screens tall; cap them to the viewport and centre them.
+   Clicking through still opens the full-size file. */
+.e-content p:has(> img) { text-align: center; }
+.e-content p > img {
+    display: block;
+    margin-inline: auto;
+    width: auto;
+    max-height: 75vh;
+    object-fit: contain;
+}
+
+/* Captions. WordPress image captions came over as an italic line directly
+   under the image (`![alt](src)` then `*caption*`), which renders as
+   <p><img> <em>…</em></p>. Style that <em> as a caption. */
+.e-content p:has(> img) > em {
+    display: block;
+    margin-top: 0.4rem;
+    color: var(--meta-color);
+    font-size: 0.85rem;
+}
+
 /* Categories and tags now both appear in the post listing (see the
    list_posts.html override). Distinguish the category chip so the two
    kinds of link don't read as one undifferentiated pile. */
@@ -14,4 +36,97 @@ article figure { margin-inline: 0; }
     text-transform: uppercase;
     font-size: 0.72rem;
     letter-spacing: 0.04em;
+}
+
+/* /series landing page (templates/series_index.html). */
+.series-list { list-style: none; padding: 0; margin-top: 2rem; }
+.series-item { padding-block: 1.5rem; border-bottom: 1px solid var(--divider-color); }
+.series-item:last-child { border-bottom: none; }
+.series-title { margin: 0; font-size: 1.4rem; }
+.series-title a { color: var(--text-color-high-contrast); text-decoration: none; }
+.series-title a:hover { color: var(--primary-color); }
+.series-meta { margin: 0.3rem 0 0.6rem; color: var(--meta-color); font-size: 0.85rem; }
+.series-description { margin: 0 0 0.8rem; }
+
+/* ---------------------------------------------------------------- Header
+   templates/partials/nav.html. The logo sits beside the title. On phones
+   (<=600px) the menu links fold into a <details> dropdown behind a ☰
+   button, so the header is one line. <details> opens and closes without
+   JavaScript; js/navmenu.js only adds tap-outside / Escape to close. */
+.home-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+}
+.site-logo {
+    flex: none;
+    border-radius: 50%;
+    background: #fff;
+    width: 2.4rem;
+    height: 2.4rem;
+    object-fit: cover;
+}
+.nav-desktop-links > ul { display: flex; }
+.nav-mobile-toggle { display: none; }
+/* summary is display:block, not flex: WebKit (every iOS browser) can fail
+   to toggle a <details> whose summary is a flex container. */
+.nav-mobile > summary { display: block; cursor: pointer; list-style: none; line-height: 0; -webkit-tap-highlight-color: transparent; }
+.nav-mobile > summary::-webkit-details-marker { display: none; }
+.nav-mobile > summary svg { width: 1.6rem; height: 1.6rem; fill: var(--text-color); }
+.nav-mobile:not([open]) .nav-mobile-panel { display: none !important; }
+/* While open, an invisible full-screen layer belongs to the summary, so a tap
+   anywhere outside the panel is a tap on the summary and closes the menu.
+   Needed because iOS does not fire click events for taps on plain page
+   areas, so a document-level "click outside" listener never runs there. */
+.nav-mobile[open] > summary::before {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    cursor: default;
+    content: "";
+}
+
+/* Homepage hero (templates/partials/home_banner.html). Selectors repeat
+   tabi's ids so they outrank its _home-banner.scss rules. */
+#banner-container-home.thi-hero #home-banner-text #home-banner-header {
+    color: var(--text-color-high-contrast);
+    font-size: 2.3rem;
+    line-height: 1.15;
+}
+#banner-container-home.thi-hero #image-container-home { max-width: 9rem; }
+
+@media only screen and (max-width: 600px) {
+    .navbar { flex-direction: row; flex-wrap: nowrap; align-items: center; padding-block: 0.75rem; }
+    .nav-navs { margin-top: 0; }
+    .home-title { gap: 0.5rem; font-size: 1.35rem; }
+    .site-logo { width: 2.1rem; height: 2.1rem; }
+    .menu-icons-group { gap: 0.5rem !important; }
+
+    .nav-desktop-links { display: none; }
+    .nav-mobile-toggle { display: flex; position: relative; }
+    .nav-mobile-panel {
+        display: flex !important;
+        position: absolute;
+        top: 2.6rem;
+        right: 0;
+        flex-direction: column;
+        align-items: stretch !important;
+        z-index: 50;
+        box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+        border: 1px solid var(--divider-color);
+        border-radius: 10px;
+        background: var(--background-color);
+        padding: 0.4rem !important;
+        min-width: 12rem;
+    }
+    .nav-mobile-panel .nav-links { display: block; padding: 0.2rem 0.9rem; font-size: 1.05rem; }
+
+    #banner-container-home.thi-hero { display: flex; align-items: center; gap: 0.75rem; margin-block: 0.5rem 1.5rem; }
+    #banner-container-home.thi-hero #home-banner-text { margin-block-end: 0; }
+    #banner-container-home.thi-hero #home-banner-text #home-banner-header { margin-block-end: 0.5rem; font-size: 1.55rem; }
+    #banner-container-home.thi-hero #home-banner-text #banner-home-subtitle p { margin: 0; font-size: 0.95rem; line-height: 1.5; }
+    #banner-container-home.thi-hero #image-container-home { flex: 0 0 6rem; width: 6rem; }
+    #banner-container-home.thi-hero #image-container-home #banner-home-img { max-width: 6rem; max-height: 6rem; }
 }

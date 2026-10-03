@@ -1,6 +1,7 @@
 +++
 title = "Making an Automatic Email Backup"
 template = "series.html"
+description = "Keeping a local, self-hosted copy of a remote IMAP account with mbsync and Dovecot — from the first working sync to a pair of Docker images that do it for you."
 transparent = true
 insert_anchor_links = "left"
 

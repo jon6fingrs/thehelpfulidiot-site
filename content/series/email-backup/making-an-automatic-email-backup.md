@@ -3,14 +3,14 @@ title = "Making an Automatic Email Backup - Part 1"
 date = 2021-10-04
 updated = 2024-04-15
 path = "making-an-automatic-email-backup"
-description = "In the world of self-hosting, creating a personal email server always seemed like the Holy Grail of personal privacy. Unfortunately, with all the work…"
+description = "Automatically backing up a remote IMAP mailbox to a home server with mbsync, then serving the archive locally with Dovecot so any mail client can read it."
 
 [taxonomies]
 category = ["Self Hosting"]
 tag = ["email", "home lab"]
 +++
 
-### UPDATE: [PART 3 ](/making-an-automatic-email-backup-part-3)has instructions for email backup using pre-made docker images based on this post and Part 2.
+### UPDATE: [PART 3](/making-an-automatic-email-backup-part-3) has instructions for email backup using pre-made docker images based on this post and Part 2.
 
 ## Intro
 
@@ -22,8 +22,8 @@ I am going to share my solution which, while it took me a lot of work, should be
 
 It requires three parts:
 
-1. [mbsync ](https://isync.sourceforge.io/mbsync.html)- a command line utility to synchronize IMAP servers
-2. [dovecot ](https://www.dovecot.org/)- IMAP server software
+1. [mbsync](https://isync.sourceforge.io/mbsync.html) - a command line utility to synchronize IMAP servers
+2. [dovecot](https://www.dovecot.org/) - IMAP server software
 3. an email client
 
 A major benefit of this set up could be for people with limited space in their email mailboxes. Instead of deleting emails to remain under 15gigs, you could essentially backup all emails to your home server, delete emails on the remote server, and still have easy, ready access to everything.
@@ -67,55 +67,55 @@ sudo nano ~/.mbsyncrc
 
 and populate accordingly. Below is the template I use with a short explanation. There are many other [configuration options](https://isync.sourceforge.io/mbsync.html) if you are interested in further customizing it.
 
-```
-<strong># Set up according to your email provider. It will probably involve creating an application password.</strong>
+```ini
+# Set up according to your email provider. It will probably involve creating an application password.
 IMAPAccount <email account>
 Host <host name>
 Port <port>
 User <username>
 Pass <password>
-<strong># select one</strong>
+# select one
 SSLType < None | STARTTLS | IMAPS >
-<strong># select one</strong>
+# select one
 SSLVersions < SSLv3 | TLSv1 | TLSv1.1 | TLSv1.2 | TLSv1.3 > 
 
-<strong># I use fastmail and so my settings will reflect that but change as needed.
-# I believe IMAPStore is relatively arbitrary and has to do with how settings are stored. <something>-remote appears to be convention.</strong>
+# I use fastmail and so my settings will reflect that but change as needed.
+# I believe IMAPStore is relatively arbitrary and has to do with how settings are stored. <something>-remote appears to be convention.
 IMAPStore fastmail-remote
-<strong># pick a name</strong>
+# pick a name
 Account fastmail
 
-<strong># This section describes the local storage
-# pick a name similar to what you picked for IMAPStore</strong>
+# This section describes the local storage
+# pick a name similar to what you picked for IMAPStore
 MaildirStore fastmail-local
 
-<strong>#The root of your mailbox. By convention the Maildir directory is in the user's home folder.</strong>
+#The root of your mailbox. By convention the Maildir directory is in the user's home folder.
 Path /home/thehelpfulidiot/Maildir/
-<strong>#The inbox seems to be a special folder in a mailbox so you need to specify it explicitly and then the other folders will be auto-created.</strong>
+#The inbox seems to be a special folder in a mailbox so you need to specify it explicitly and then the other folders will be auto-created.
 Inbox /home/thehelpfulidiot/Maildir/Inbox/
-<strong># Adds additional subfolders to match IMAP folder names</strong>
+# Adds additional subfolders to match IMAP folder names
 SubFolders Verbatim
 
-<strong># A channel defines how the sync will occur between the server and local storage.
-# pick a name</strong>
+# A channel defines how the sync will occur between the server and local storage.
+# pick a name
 Channel fastmail
-<strong># use what you have for IMAPStore above between two :'s</strong>
+# use what you have for IMAPStore above between two :'s
 Master :fastmail-remote:
-<strong># use what you have for MaildirStore above between two :'s</strong>
+# use what you have for MaildirStore above between two :'s
 Slave :fastmail-local:
-<strong># You can control what gets synced. '*' syncs everything.</strong>
+# You can control what gets synced. '*' syncs everything.
 Patterns *
-<strong># Do not remove messages marked for deletion</strong>
+# Do not remove messages marked for deletion
 Expunge None
-<strong># Do not remove deleted mailboxes</strong>
+# Do not remove deleted mailboxes
 Remove None
-<strong># use the arrival date and time from the IMAP server for the original message</strong>
+# use the arrival date and time from the IMAP server for the original message
 CopyArrivalDate yes
-<strong># You can see all the different ways to sync the mailboxes by going to the link above, but this will sync from remote to local without propagating deletions.</strong>
+# You can see all the different ways to sync the mailboxes by going to the link above, but this will sync from remote to local without propagating deletions.
 Sync PullNew
-<strong># automatically create necessary mailboxes locally</strong>
+# automatically create necessary mailboxes locally
 Create Slave
-<strong>#keeps the mailbox sync state files in the local mailbox</strong>
+#keeps the mailbox sync state files in the local mailbox
 SyncState *
 ```
 
@@ -206,13 +206,13 @@ sudo nano /etc/dovecot/conf.d/10-mail.conf
 
 Locate the following line:
 
-```
+```ini
 mail_location = mbox:~/mail:INBOX=/var/mail/%u
 ```
 
 Comment it out and replace it with:
 
-```
+```ini
 mail_location=maildir:~/Maildir:LAYOUT=fs:INBOX=~/Maildir/INBOX
 ```
 
@@ -222,13 +222,13 @@ Next, open 10-auth.conf.
 
 Replace
 
-```
+```ini
  #disable_plaintext_auth = yes
 ```
 
 with
 
-```
+```ini
 disable_plaintext_auth = no
 ```
 
@@ -238,14 +238,14 @@ Now open 15-mailboxes.conf.
 
 Under "namespace inbox {", add "inbox  =  yes" like so:
 
-```
+```text
 namespace inbox {
   inbox = yes
 ```
 
 Go down farther and uncomment the blocks about the virtual "all" and "flagged" mailboxes so that it looks like this:
 
-```
+```text
   # If you have a virtual "All messages" mailbox:
   mailbox virtual/All {
     special_use = \All
@@ -272,7 +272,7 @@ Dovecot is ready and your IMAP server should be functioning on your internal net
 
 Now if you use a mail app, you should be able to enter the IP address of your Mail Backup LXC in the server name and your Linux account credentials and your email will populate like any other server. For example, on my iPhone, I entered the following settings:
 
-![](/wp-content/uploads/2021/10/IMG_8713-473x1024.png)
+![Home SMTP settings](/wp-content/uploads/2021/10/IMG_8713-473x1024.png)
 *Home SMTP settings*
 
 You can basically make the name, email, and descriptions what you would normally use for your remote email server. It will not be able to authenticate of course and you will then have an opportunity to create separate username, passwords, and server identities for IMAP and SMTP. The IMAP host name is your LXC's IP address, the user name is your Linux username, and the password is your Linux password.
@@ -281,7 +281,7 @@ The SMTP configuration would be according to your remote server's SMTP configura
 
 You'll notice that attempting to connect from an iPhone (and I suspect from other systems) gives this warning:
 
-![](/wp-content/uploads/2021/10/IMG_8711-473x1024.png)
+![SSL error](/wp-content/uploads/2021/10/IMG_8711-473x1024.png)
 *SSL error*
 
 I will continue in a second part on how to take things a bit further. I will show you how to install self-signed certificates, and how to set up a local webmail application called Roundcube to view your backed-up mailbox and send emails through your remote server.

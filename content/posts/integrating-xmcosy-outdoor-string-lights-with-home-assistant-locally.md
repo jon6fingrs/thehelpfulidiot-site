@@ -3,14 +3,14 @@ title = "Integrating XMCOSY+ Outdoor String Lights with Home Assistant Locally"
 date = 2022-06-17
 updated = 2024-04-15
 path = "integrating-xmcosy-outdoor-string-lights-with-home-assistant-locally"
-description = "Home automation is incredible and obviously in my opinion, a lot of fun. However, I'm sure many of you would agree that buying a product for use in your…"
+description = "Running XMCOSY+ outdoor string lights fully locally with Local Tuya, template lights and Node-RED, keeping colors, scenes and brightness."
 
 [taxonomies]
 category = ["Smart Home"]
 +++
 
-![](/wp-content/uploads/2022/06/image.png)
-***XMCOSY+ Outdoor String Lights***
+![XMCOSY+ Outdoor String Lights](/wp-content/uploads/2022/06/image.png)
+*XMCOSY+ Outdoor String Lights*
 
 Home automation is incredible and obviously in my opinion, a lot of fun. However, I'm sure many of you would agree that buying a product for use in your home shouldn't have to connect to an outside computer, let alone one in another country.
 
@@ -95,24 +95,24 @@ So based on that, we will make a few entities using Local Tuya, all based around
 
 First, of course, is the light itself. You can match up the DPs as follows:
 
-![](/wp-content/uploads/2022/06/339E43DD-EA57-48EE-B8AC-B9B95A246882-369x1024.jpeg)
-***LocalTuya Light Configuration***
+![LocalTuya Light Configuration](/wp-content/uploads/2022/06/339E43DD-EA57-48EE-B8AC-B9B95A246882-369x1024.jpeg)
+*LocalTuya Light Configuration*
 
 This sets up a light entity, but like I said, it is very limited. Cannot change between scenes, adjust scene colors, etc.
 
 Next, we need to set up some sensors from LocalTuya so that we can easily access the data for use in a template light.
 
-![](/wp-content/uploads/2022/06/22F77A2A-D407-4B35-8BEB-C1CCD1E1B7F0-824x1024.jpeg)
-***sensor.string_lights_scene***
+![sensor.string_lights_scene](/wp-content/uploads/2022/06/22F77A2A-D407-4B35-8BEB-C1CCD1E1B7F0-824x1024.jpeg)
+*sensor.string_lights_scene*
 
-![](/wp-content/uploads/2022/06/C4E65DB9-35F6-46CD-8376-8ECE759ED63A-849x1024.jpeg)
-***sensor.string_light_color***
+![sensor.string_light_color](/wp-content/uploads/2022/06/C4E65DB9-35F6-46CD-8376-8ECE759ED63A-849x1024.jpeg)
+*sensor.string_light_color*
 
-![](/wp-content/uploads/2022/06/C290DBCF-FC86-4E5B-8073-F04E560D5356-847x1024.jpeg)
-***sensor.string_light_color_value***
+![sensor.string_light_color_value](/wp-content/uploads/2022/06/C290DBCF-FC86-4E5B-8073-F04E560D5356-847x1024.jpeg)
+*sensor.string_light_color_value*
 
-![](/wp-content/uploads/2022/06/03BF911E-81B9-44CE-8E7D-F13F4E290604-822x1024.jpeg)
-***sensor.custom_colors***
+![sensor.custom_colors](/wp-content/uploads/2022/06/03BF911E-81B9-44CE-8E7D-F13F4E290604-822x1024.jpeg)
+*sensor.custom_colors*
 
 So after all this, you should have five newly create LocalTuya entities:
 
@@ -129,7 +129,7 @@ Now it's time to move on to templates.
 OK so now you can control the lights, but wouldn't it be nice to package everything in a single light entity? Fortunately, we can make template entities to combine the sensors and the light entity we created with LocalTuya.
 
 {% raw %}
-```
+```yaml
   - platform: template
     lights:
       string_lights:
@@ -292,7 +292,7 @@ One issue I noticed is that the brightness value is only relevant when the light
 Anyway, to make sure the correct brightness value is modified when you modify the brightness from the light entity in home assistant, I offloaded that to a script seen below:
 
 {% raw %}
-```
+```yaml
 alias: brightness with white or color
 sequence:
   - choose:
@@ -352,26 +352,26 @@ Now to switch gears to Node Red. For those who don't know, it is a very commonly
 
 The one we will need is called [node-red-contrib-colorspace.](https://flows.nodered.org/node/node-red-contrib-colorspace) It allowed me to create a "Flow" which received the HSV value through HTTP request, convert it to rgb, and send it back to Home Assistant. I send it back by using the Home Assistant nodes to update a sensor called "sensor.color_output".
 
-![](/wp-content/uploads/2022/06/Screenshot-from-2022-06-17-19-04-52.png)
-***sensor.color_output***
+![sensor.color_output](/wp-content/uploads/2022/06/Screenshot-from-2022-06-17-19-04-52.png)
+*sensor.color_output*
 
 My flow looks like this:
 
-![](/wp-content/uploads/2022/06/Screenshot-from-2022-06-17-18-51-05.png)
-***Node-red Flow***
+![Node-red Flow](/wp-content/uploads/2022/06/Screenshot-from-2022-06-17-18-51-05.png)
+*Node-red Flow*
 
 ## Final Product
 
 Ok, so now we have a fully functional entity called "light.string_lights". It can control (almost) every light function as one would expect from a regular Home Assistant light entity.
 
-![](/wp-content/uploads/2022/06/D2C4F0E1-5322-428E-ACAA-16B56DF7992C-502x1024.jpeg)
-***white light***
+![white light](/wp-content/uploads/2022/06/D2C4F0E1-5322-428E-ACAA-16B56DF7992C-502x1024.jpeg)
+*white light*
 
-![](/wp-content/uploads/2022/06/061CCBEE-C31D-473D-A159-F721FA35E66B-502x1024.jpeg)
-***Color Select***
+![Color Select](/wp-content/uploads/2022/06/061CCBEE-C31D-473D-A159-F721FA35E66B-502x1024.jpeg)
+*Color Select*
 
-![](/wp-content/uploads/2022/06/A6C8459D-7B2A-4071-8D96-530596E6F5FE-506x1024.jpeg)
-***scene select***
+![scene select](/wp-content/uploads/2022/06/A6C8459D-7B2A-4071-8D96-530596E6F5FE-506x1024.jpeg)
+*scene select*
 
 It can control brightness, color, and the scenes. It can change brightness for color or white seamlessly. But there's one more thing- scene8.
 
@@ -379,13 +379,13 @@ It can control brightness, color, and the scenes. It can change brightness for c
 
 Scene 8 is one of 9 scenes, and is the only customizable one. It alternates two colors which can be changed independently. I made two select entities for them. I just chose a handful of colors and created a dropdown menu although it would be possible to choose any color as well.
 
-![](/wp-content/uploads/2022/06/2B4AFC06-FF7C-4AFB-BE23-E0EE093DF503-337x1024.jpeg)
+![Color Select](/wp-content/uploads/2022/06/2B4AFC06-FF7C-4AFB-BE23-E0EE093DF503-337x1024.jpeg)
 *Color Select*
 
 Whenever these entities are changed, they trigger an automation to change the color of the light:
 
 {% raw %}
-```
+```yaml
 alias: Change string light colors
 description: ''
 trigger:
@@ -497,7 +497,7 @@ mode: single
 To confirm the light color was changed to the desired color, I also made two sensors to read the scene's custom colors from the light itself.
 
 {% raw %}
-```
+```yaml
 - sensor:
       - name: "Custom Color 2"
         state: >
@@ -579,18 +579,18 @@ To confirm the light color was changed to the desired color, I also made two sen
 
 That produces these two entities:
 
-![](/wp-content/uploads/2022/06/color-select.png)
-***Color Select Entities***
+![Color Select Entities](/wp-content/uploads/2022/06/color-select.png)
+*Color Select Entities*
 
-![](/wp-content/uploads/2022/06/C6C895F8-E8AE-4DB8-892C-9C77EC2EC01D-502x1024.jpeg)
-***Light Picker***
+![Light Picker](/wp-content/uploads/2022/06/C6C895F8-E8AE-4DB8-892C-9C77EC2EC01D-502x1024.jpeg)
+*Light Picker*
 
 ## Finally
 
 Our light is finished and fully controllable locally. The next step is to block the light's internet access from your router.
 
-![](/wp-content/uploads/2022/06/02B41E12-7BF8-4FE2-8872-15432837DFA8-987x1024.jpeg)
-***Completed Light***
+![Completed Light](/wp-content/uploads/2022/06/02B41E12-7BF8-4FE2-8872-15432837DFA8-987x1024.jpeg)
+*Completed Light*
 
 Hope this helps some people! Let me know if you have any questions!
 

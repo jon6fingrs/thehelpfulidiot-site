@@ -3,7 +3,7 @@ title = "How to Use Zigbee2Tasmota with Home Assistant"
 date = 2021-10-02
 updated = 2024-04-15
 path = "how-to-use-zigbee2tasmota-with-home-assistant"
-description = "To follow up my last post, integrating a newly flashed Tasmota Zigbee Coordinator with Home Assistant has a third option besides ZHA and Zigbee2MQTT; it…"
+description = "Using a Tasmota Zigbee coordinator directly with Zigbee2Tasmota and MQTT in Home Assistant, instead of ZHA or Zigbee2MQTT."
 
 [taxonomies]
 category = ["Smart Home"]
@@ -22,13 +22,13 @@ To solve this, I began splitting up my various services and really only have my 
 
 Back to my point, I did not initially enjoy turning my Tasmotized Zigbee Coordinator into a Home Assistant Zombie. When you integrate the Zigbee coordinator into ZHA, you lose all native Zigbee commands of the coordinator.
 
-![](/wp-content/uploads/2021/10/image-1024x515.png)
+![Tasmota main menu before and after integrating with ZHA: the Zigbee Permit Join and Zigbee Map buttons disappear](/wp-content/uploads/2021/10/image-1024x515.png)
 
 In an effort to further decentralize my smart home infrastructure, I would prefer for the zigbee coordinator to maintain functioning even if my Home Assistant instance goes down. Having said that, the device now becomes dependent on a functioning MQTT server so that is certainly a trade-off. I personally keep my MQTT server running on my NAS so that it is always up. I also have a second instance of Home Assistant which meant that I could only integrate the coordinator natively with one instance, whereas when the connection is over MQTT, it can connect to an unlimited number of Home Assistant Servers. I also think an MQTT server is more stable than a WiFi serial over TCP connection. I subjectively and anecdotally noticed a quicker reaction time with Zigbee2Tasmota vs ZHA.
 
 Second, based on my testing and internet research, it is really not possible to change the Zigbee channel from 11 when integrating the Zigbee Coordinator in ZHA. I have a Hue Hub and WiFi channels 1, 6, and 11 throughout my home and so for me, the ideal channel was 20. With Zigbee2Tasmota, this is a trivial command.
 
-```
+```text
 zbconfig {"Channel":<enter channel>}
 ```
 
@@ -38,7 +38,7 @@ But it isn't all positive. There are certainly plenty of downsides with Zigbee2T
 
 First, all commands are done through the console except Zigbee Join and viewing the Zigbee Map, as you can see below. I suppose that negative depends on the individual, but it is certainly a nice option to have an easy to use GUI nicely integrated into Home Assistant. However, I should note once devices are added, they are listed on the main Tasmota page along with their current state, connection strength, battery level, etc.
 
-![](/wp-content/uploads/2021/10/image-2.png)
+![Zigbee2Tasmota web UI listing paired Zigbee devices with their state, battery and signal](/wp-content/uploads/2021/10/image-2.png)
 
 It is definitely nice for a quick glance or to troubleshoot.
 
@@ -64,7 +64,7 @@ By setting SetOption89 to 1, each device is given their own topic, `tele/%topic%
 
 Each device is given a unique identifier when it joins the network, and that is used to initially populate the MQTT topic if you decided to make the change I suggested above, but there is fortunately a way to give friendly names to each device.
 
-```
+```text
 ZBName <device>,<new_friendly_name>
 ```
 
@@ -81,12 +81,12 @@ Here are some examples I made to control various devices. Like I said above, the
 
 ```yaml
   - platform: mqtt
-    name: <strong>master bath motion</strong>
-    state_topic: "tele/<strong>zbbridge</strong>/<strong>master_bath_motion</strong>/SENSOR"
-    value_template: "{{ value_json['ZbReceived']['<strong>master_bath_motion</strong>']['Occupancy'] }}"
+    name: master bath motion
+    state_topic: "tele/zbbridge/master_bath_motion/SENSOR"
+    value_template: "{{ value_json['ZbReceived']['master_bath_motion']['Occupancy'] }}"
     payload_on: 1
     payload_off: 0
-    availability_topic: "tele/<strong>zbbridge</strong>/LWT"
+    availability_topic: "tele/zbbridge/LWT"
     payload_available: "Online"
     payload_not_available: "Offline"
     qos: 0
@@ -99,12 +99,12 @@ Here are some examples I made to control various devices. Like I said above, the
 
 ```yaml
   - platform: mqtt
-    name: <strong>half bath door sensor</strong>
-    state_topic: "tele/<strong>zbbridge</strong>/<strong>half_bath_door</strong>/SENSOR"
-    value_template: "{{ value_json['ZbReceived']['<strong>half_bath_door</strong>']['ZoneStatusChange'] }}"
+    name: half bath door sensor
+    state_topic: "tele/zbbridge/half_bath_door/SENSOR"
+    value_template: "{{ value_json['ZbReceived']['half_bath_door']['ZoneStatusChange'] }}"
     payload_on: 1
     payload_off: 0
-    availability_topic: "tele/<strong>zbbridge</strong>/LWT"
+    availability_topic: "tele/zbbridge/LWT"
     payload_available: "Online"
     payload_not_available: "Offline"
     qos: 0
@@ -119,15 +119,15 @@ This was a little trickier. A battery percentage is not sent with each device up
 
 ```yaml
   - platform: mqtt
-    name: <strong>half bath door battery</strong>
-    state_topic: "tele/<strong>zbbridge</strong>/<strong>half_bath_door</strong>/SENSOR"
+    name: half bath door battery
+    state_topic: "tele/zbbridge/half_bath_door/SENSOR"
     value_template: >
-      {% if value_json['ZbReceived']['<strong>half_bath_door</strong>']['BatteryPercentage'] > 0 %}
-        {{ value_json['ZbReceived']['<strong>half_bath_door</strong>']['BatteryPercentage'] }}
+      {% if value_json['ZbReceived']['half_bath_door']['BatteryPercentage'] > 0 %}
+        {{ value_json['ZbReceived']['half_bath_door']['BatteryPercentage'] }}
       {% else %}
         {{ states(entity_id) }}
       {% endif %}
-    availability_topic: "tele/<strong>zbbridge</strong>/LWT"
+    availability_topic: "tele/zbbridge/LWT"
     payload_available: "Online"
     payload_not_available: "Offline"
     qos: 0
@@ -144,15 +144,15 @@ The same is true for the Aqara Humidity and Temperature Sensor I use. Each messa
 {% raw %}
 ```yaml
   - platform: mqtt
-    name: <strong>refrigerator temperature sensor</strong>
-    state_topic: "tele/<strong>zbbridge</strong>/<strong>refrigerator_temperature_sensor</strong>/SENSOR"
+    name: refrigerator temperature sensor
+    state_topic: "tele/zbbridge/refrigerator_temperature_sensor/SENSOR"
     value_template: >
-      {% if value_json['ZbReceived']['<strong>refrigerator_temperature_sensor</strong>']['Temperature'] > 0 %}
-        {{ (value_json['ZbReceived']['<strong>refrigerator_temperature_sensor</strong>']['Temperature']|float + 1.8) + 32 }}
+      {% if value_json['ZbReceived']['refrigerator_temperature_sensor']['Temperature'] > 0 %}
+        {{ (value_json['ZbReceived']['refrigerator_temperature_sensor']['Temperature']|float + 1.8) + 32 }}
       {% else %}
         {{ states(entity_id) }}
       {% endif %}
-    availability_topic: "tele/<strong>zbbridge</strong>/LWT"
+    availability_topic: "tele/zbbridge/LWT"
     payload_available: "Online"
     payload_not_available: "Offline"
     qos: 0
@@ -161,15 +161,15 @@ The same is true for the Aqara Humidity and Temperature Sensor I use. Each messa
     unit_of_measurement: 'F'
 
   - platform: mqtt
-    name: <strong>refrigerator humidity sensor</strong>
-    state_topic: "tele/<strong>zbbridge</strong>/<strong>refrigerator_temperature_sensor</strong>/SENSOR"
+    name: refrigerator humidity sensor
+    state_topic: "tele/zbbridge/refrigerator_temperature_sensor/SENSOR"
     value_template: >
-      {% if value_json['ZbReceived']['<strong>refrigerator_temperature_sensor</strong>']['Humidity'] > 0 %}
-        {{ value_json['ZbReceived']['<strong>refrigerator_temperature_sensor</strong>']['Humidity'] }}
+      {% if value_json['ZbReceived']['refrigerator_temperature_sensor']['Humidity'] > 0 %}
+        {{ value_json['ZbReceived']['refrigerator_temperature_sensor']['Humidity'] }}
       {% else %}
         {{ states(entity_id) }}
       {% endif %}
-    availability_topic: "tele/<strong>zbbridge</strong>/LWT"
+    availability_topic: "tele/zbbridge/LWT"
     payload_available: "Online"
     payload_not_available: "Offline"
     qos: 0
@@ -185,7 +185,7 @@ Ok, so far things have  been relatively straightforward. Here is where they get 
 
 Like I said above, the lights can only receive a single command at a time. Luckily, it is possible to group lights and send 1 command for multiple lights. To do so, use this following [command](https://tasmota.github.io/docs/Zigbee/#zigbee-groups):
 
-```
+```text
 ZbSend {"device":"IKEA_Light","Send":{"AddGroup":100}}
 ```
 
@@ -196,7 +196,7 @@ First I will show how I handled a single light. It required both an mqtt entity 
 Si**ngle Light:**
 
 {% raw %}
-```
+```yaml
    - platform: template
      lights:
        guest_bedroom_lamp_template:
@@ -327,7 +327,7 @@ As you can see, my lights are also customized with the min and max color_temp an
 Controlling a group of lights was also a little tricky. I set up the same MQTT and template entities for each light, but the group light required its own template entity.
 
 {% raw %}
-```
+```yaml
   - platform: template
     lights:
       kids_bath_1:

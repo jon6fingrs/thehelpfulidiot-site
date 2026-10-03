@@ -3,7 +3,7 @@ title = "Playing a sound directly from Home Assistant Operating System"
 date = 2021-10-02
 updated = 2024-04-15
 path = "playing-a-sound-directly-from-home-assistant-operating-system"
-description = "This may sound like it should've been a trivial task to accomplish but took me way longer to solve than I anticipated. As I said it my first post, I…"
+description = "Playing a door chime through a speaker plugged into the Home Assistant box itself, using the VLC add-on over telnet."
 
 [taxonomies]
 category = ["Smart Home"]
@@ -24,7 +24,7 @@ I wanted something as simple as possible, and to me, the obvious solution was to
 
 Home Assistant's addon store has a very bizarre version of VLC. It seems like it is feature incomplete and has almost no options. I couldn't figure out how to use it.
 
-![](/wp-content/uploads/2021/10/image-3-1024x384.png)
+![VLC from Official Add-on Store](/wp-content/uploads/2021/10/image-3-1024x384.png)
 *VLC from Official Add-on Store*
 
 Fortunately, there exists another version of VLC from a repository belonging to [rodripf](https://github.com/rodripf/hassio-local-vlc). Simply add the following address to the add-on repository list to install it:
@@ -33,7 +33,7 @@ Fortunately, there exists another version of VLC from a repository belonging to 
 
 Once installed, it can be configured for telnet access. This is what I found to be the easiest and most reliable way to play a sound. Set the following options as desired.
 
-![](/wp-content/uploads/2021/10/image-4.png)
+![Local VLC add-on options: telnet and HTTP passwords, ports 4212 and 9892, audio output](/wp-content/uploads/2021/10/image-4.png)
 
 Once that is set up, it is necessary to add a [vlc_telnet](https://www.home-assistant.io/integrations/vlc_telnet/) entity which is done through yaml.
 
@@ -64,7 +64,7 @@ It is important to make the media_content_type "music" as that is the only media
 
 You can go to a web gui of your VLC instance by going to your homeassistanturl:9892 and using the password you created in the addon settings page.
 
-![](/wp-content/uploads/2021/10/image-5.png)
+![VLC web interface with a playlist loaded](/wp-content/uploads/2021/10/image-5.png)
 
 It's important to make sure your volume here is set to something reasonable. At first, I could not get any sound to play since the volume defaulted to 0.
 

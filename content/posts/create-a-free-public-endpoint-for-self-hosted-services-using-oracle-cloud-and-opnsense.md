@@ -3,7 +3,7 @@ title = "Create a FREE public endpoint for self-hosted services using Oracle Clo
 date = 2022-09-15
 updated = 2024-04-15
 path = "create-a-free-public-endpoint-for-self-hosted-services-using-oracle-cloud-and-opnsense"
-description = "As many of you (the people who would be interested enough to read this post), I have a number of self hosted services which have become integral to my…"
+description = "Using an always-free Oracle Cloud VM and a WireGuard tunnel to OPNsense to expose self-hosted services publicly without opening ports at home."
 
 [taxonomies]
 category = ["Self Hosting"]
@@ -14,14 +14,14 @@ tag = ["home lab", "wireguard"]
 
 As many of you (the people who would be interested enough to read this post), I have a number of self hosted services which have become integral to my everyday life. For the most part, I use a wireguard (split) tunnel to access these services remotely from my phone or laptop. However, there are some services, like Nextcloud, for which I prefer public access so that I can access them from any computer. Up till now, I have opened port 443 on my router and forwarded incoming traffic to an instance of Nginx Proxy Manager. This has been working fine for the most part, but I have a residential ISP with a dynamic IP address. Even though I have my incoming connections go through my OPNsense router with crowdsec and geo block lists, I just never liked the idea of opening ports on my router.
 
-![](/wp-content/uploads/2022/09/original-network-layout.png)
+![Original Network Layout](/wp-content/uploads/2022/09/original-network-layout.png)
 *Original Network Layout*
 
 To solve this, I became enamored with the idea of setting up a public IP address on a VPS which would send the connection requests to my NPM instance through a wireguard tunnel.
 
 There are plenty of tutorials how to forward connections through Wireguard, and there is an [amazing tool](https://github.com/mochman/Bypass_CGNAT) to do almost exactly what I described. However, the tool requires a linux endpoint on the local network as opposed to sending all connections to OPNsense. My ideal plan would have the VPS connections first passing through OPNsense where they could be acted upon as any other incoming connection.
 
-![](/wp-content/uploads/2022/09/oracle-cloud-layout.png)
+![New Network Layout](/wp-content/uploads/2022/09/oracle-cloud-layout.png)
 *New Network Layout*
 
 So ultimately, at the end of this tutorial, we will have a static IP address through a free oracle cloud virtual machine. It will forward whichever connections we want to OPNsense. I'm sure this could be configured as a VPN endpoint for all connections if desired, but that won't be covered here.
@@ -34,21 +34,21 @@ Ok, so first thing we need to do is set up our virtual machine on the Oracle Clo
 
 Oracle has a free tier and "Always Free Resources". Obviously, they could always take these free resources as many cloud providers eventually do, but lets hope if it happens, it doesn't happen for a while.
 
-![](/wp-content/uploads/2022/09/ampere-a1-compute.png)
+![Always free VM](/wp-content/uploads/2022/09/ampere-a1-compute.png)
 *Always free VM*
 
 So first step, create an account.
 
 Instead of going straight to making a new compute instance, I had to make a "compartment". I think that's how the compute instances are clustered. To be honest, I am not sure that I actually needed to make a new compartment but had trouble getting my machine set up without it.
 
-![](/wp-content/uploads/2022/09/compartments.png)
+![From the top left hamburger menu, go to Compartments.](/wp-content/uploads/2022/09/compartments.png)
 *From the top left hamburger menu, go to Compartments.*
 
 From there, create a new compartment. Name it whatever you want, and for parent compartment, select your root.
 
 Next click on the big Oracle Cloud image top left to go back to the main page. Now we will set up our compute instance.
 
-![](/wp-content/uploads/2022/09/instances-compute.png)
+![Click Instances](/wp-content/uploads/2022/09/instances-compute.png)
 *Click Instances*
 
 Click the "Create Instsance" button.
@@ -63,7 +63,7 @@ Now for Image & Shape, we will change some options. For the purposes of this tut
 
 Under Shape Series, select "Ampere" and let's max out our machine specs under the Free Tier.
 
-![](/wp-content/uploads/2022/09/oracle-cloud-shape.png)
+![Free tier specs](/wp-content/uploads/2022/09/oracle-cloud-shape.png)
 *Free tier specs*
 
 Click select shape and proceed. Keep networking options as default.
@@ -74,7 +74,7 @@ Now back at the instances screen, you should see your new instance along with it
 
 Click on your instance name. Under "Primary VNIC", then subnet, there should be a hyperlink to the subnet your machine is using. Click on it. Scroll down and click on the default security list. I erased all of the default firewall rules and replaced them with a rule to allow all traffic as we can just rely on ufw to protect our  machine.
 
-![](/wp-content/uploads/2022/09/ingress-rules.png)
+![Open Ingress Rules](/wp-content/uploads/2022/09/ingress-rules.png)
 *Open Ingress Rules*
 
 Ok perfect, now lets get into our machine. We are going to use the Public IP address to SSH in to our server and get to work. Find your Private SSH key and add it to your ~/.ssh directory. Set the permissions for the key to 600. Now you can access your server with the following:
@@ -92,7 +92,7 @@ sudo apt install wireguard
 
 Now create a public and private wireguard key.
 
-```
+```bash
 wg genkey | sudo tee /etc/wireguard/private.key
 sudo chmod go= /etc/wireguard/private.key
 sudo cat /etc/wireguard/private.key | wg pubkey | sudo tee /etc/wireguard/public.key
@@ -109,20 +109,20 @@ And use the following:
 {% raw %}
 ```ini
 [Interface]
-PrivateKey = <strong>{{private key you just generated}}</strong>
+PrivateKey = {{private key you just generated}}
 ListenPort = 51820
-<strong>#(any port above here)</strong>
+#(any port above here)
 Address = 10.1.0.1/24
-<strong>#(an address from a different subnet from your private LAN)</strong>
+#(an address from a different subnet from your private LAN)
 MTU = 1420
 
 PostUp = iptables -A FORWARD -i enp0s3 -j ACCEPT; iptables -t nat -A POSTROUTING -o wg0
 PostDown = iptables -D FORWARD -i enp0s3 -j ACCEPT; iptables -t nat -A POSTROUTING -o wg0
-<strong>#enp0s3 is whatever your virtual machines main interface is called</strong>
+#enp0s3 is whatever your virtual machines main interface is called
 
 [Peer]
-PublicKey = <strong>{{ we do not have this yet }}</strong>
-AllowedIPs = 10.1.0.0/24, <strong>{{address of npm/32}}</strong>
+PublicKey = {{ we do not have this yet }}
+AllowedIPs = 10.1.0.0/24, {{address of npm/32}}
 PersistentKeepalive = 25
 ```
 {% endraw %}
@@ -135,7 +135,7 @@ sudo nano /etc/sysctl.conf
 
 Add the following two lines:
 
-```
+```ini
 net.ipv4.ip_forward=1
 net.ipv6.conf.all.forwarding=1
 ```
@@ -182,7 +182,7 @@ sudo ufw status
 
 and we should see something like:
 
-```
+```text
 Status: active
 
 To                         Action      From
@@ -202,12 +202,12 @@ So if you haven't already, install either the wireguard-go or wireguard-kmod pac
 
 Go to the Wireguard menu and then the Endpoints tab. Create a new endpoint and fill it out like so:
 
-![](/wp-content/uploads/2022/09/WIREGUARD-ENDPOINT-OPNSENSE.png)
+![Wireguard OPNsense Endpoint](/wp-content/uploads/2022/09/WIREGUARD-ENDPOINT-OPNSENSE.png)
 *Wireguard OPNsense Endpoint*
 
 Now switch to the Local tab and create a new entry like so:
 
-![](/wp-content/uploads/2022/09/local-config-opnsense.png)
+![OPNsense local configuration](/wp-content/uploads/2022/09/local-config-opnsense.png)
 *OPNsense local configuration*
 
 Make sure advanced options are checked. Call it whatever you want, set an MTU (I think?). Enter what this client's IP address will be. Since our VPS is 10.1.0.1, I chose 10.1.0.2 for this client, and make sure to use the /24 subnet. Select your previously made endpoint under peers. MAKE SURE TO CLICK DISABLE ROUTES. Otherwise when you initiate the connection, the routing tables will be edited to try and send all traffic through the Wireguard network. Then make sure to enter the VPS Wireguard IP address for the Gateway.
@@ -236,7 +236,7 @@ Click on it, make sure it is enabled, and click Promiscuous mode, save.
 
 Ok almost done. Now we'll just go down the line and add the settings necessary for our VPS to act as the external gateway we want.
 
-![](/wp-content/uploads/2022/09/gateway.png)
+![New gateway](/wp-content/uploads/2022/09/gateway.png)
 *New gateway*
 
 Change the settings to match what I have above. The IP address should be the IP address of the Wireguard interface on the VPS.
@@ -252,7 +252,7 @@ Now we will move on to the firewall rules for our new VPS/Wireguard interface. C
 2. Allow communication between clients on our interface subnet
 3. Geo-block IPs if desired
 
-![](/wp-content/uploads/2022/09/firewall.png)
+![VPS/Wireguard interface firewall rules](/wp-content/uploads/2022/09/firewall.png)
 *VPS/Wireguard interface firewall rules*
 
 I also included the same "set local tag" directive with "oracle" to both of those above Pass rules. Not sure if that is necessary, but I figured it wouldn't hurt. Basically, I want anything that comes in through this interface to leave through it.
@@ -261,7 +261,7 @@ Finally, we will tell the router how to send the packets back out through the VP
 
 Go to the interface where your NPM instance is. Make a new firewall rule. This time, however, instead of choosing "in" for the direction, choose "out". Then we can leave everything alone and just make a few changes under the "Advanced" section.
 
-![](/wp-content/uploads/2022/09/firewall-out-rule.png)
+![Firewall "out" rule](/wp-content/uploads/2022/09/firewall-out-rule.png)
 *Firewall "out" rule*
 
 There are three things to do here.

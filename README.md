@@ -19,8 +19,8 @@ The config is set up so nothing you have published changes address:
 | `/page/2` | `/page/2` | `paginate_by = 10` on `content/_index.md` |
 | `/category/<slug>/` | same | taxonomy named `category`, singular, on purpose |
 | `/tag/<slug>/` | same | taxonomy named `tag`, singular |
-| `/feed/` | `/atom.xml`, `/rss.xml` | needs an nginx redirect, see below |
-| `/author/jonkatz/` | — | needs an nginx redirect to `/` |
+| `/feed/` | `/rss.xml` (and `/atom.xml`) | nginx 301 |
+| `/author/jonkatz/` | — | nginx 301 to `/` |
 
 ## Layout
 
@@ -29,13 +29,16 @@ config.toml
 content/
   _index.md            paginated homepage (10/page, like WordPress)
   posts/_index.md      transparent section — posts resolve at root level
-  posts/*.md           <- converter output goes here
+  posts/*.md           standalone posts
   pages/_index.md      render = false; holds standalone pages
-  pages/about.md       already populated from the live site's About text
+  pages/about.md
   archive/_index.md    full post index at /archive
+  series/              one folder per series; /series lists them automatically
+i18n/en.toml           tabi's English strings, locale changed to en_US
 static/
-  custom.css           code-block scroll + image sizing
-  wp-content/uploads/  <- rsync target; keeping this path means zero URL rewriting
+  custom.css           image sizing/captions, series page, category chips
+  wp-content/uploads/  migrated media; keeping this path means zero URL rewriting
+templates/             overrides of tabi (see comments in each file)
 themes/tabi/           vendored, not a submodule
 ```
 
@@ -46,102 +49,104 @@ combination is untested.
 
 ---
 
-# Runbook
+# Writing a new post
 
-## 1. On the WordPress LXC — extract
+New posts go in `content/posts/` (or a series folder, below). Copy this:
+
+```toml
++++
+title = "My New Post"
+date = 2026-10-03
+path = "my-new-post"          # URL becomes /my-new-post — keep the WordPress-style flat URLs
+description = "One or two plain sentences. Used for search results, link previews and the homepage listing."
+# draft = true                # builds only under `zola serve`
+
+[taxonomies]
+category = ["Self Hosting"]   # or "Smart Home" — reuse existing names exactly
+tag = ["home assistant"]      # lowercase, reuse existing tags where possible
++++
+```
+
+- **`path` is required.** Without it the post lands at `/posts/<slug>/`,
+  breaking the flat URL scheme every other post uses.
+- **`description` matters.** Without one, listings fall back to the first
+  paragraph and link previews get nothing useful.
+- **Code fences need a language** (` ```bash `, ` ```yaml `, ` ```ini `,
+  ` ```python `, ` ```nginx `, or ` ```text ` for console output). Unlabelled
+  fences build, but render as "PLAIN" with no highlighting.
+- **Images:** put new ones under `static/img/` (served at `/img/…`), and always
+  write alt text: `![What the image shows](/img/foo.png)`. A caption is an
+  italic line directly underneath — `custom.css` styles it as a caption:
+
+  ```markdown
+  ![Tasmota main menu](/img/tasmota-menu.png)
+  *The main menu after flashing*
+  ```
+
+  Images are capped to 75% of the viewport height and lazy-loaded
+  (`lazy_async_image` in config.toml). Shrink screenshots before committing;
+  1 MB PNGs are what made the old posts heavy.
+- **`updated = YYYY-MM-DD`** shows "Updated on …" on the post page. Only set it
+  for real revisions.
+- **Comments** (giscus) are on for every post. Set `[extra] giscus = false`
+  to turn them off for one page (the About page does this).
+
+## Series
+
+A series is a folder under `content/series/` with an `_index.md` that sets
+`extra.series = true` (copy `content/series/email-backup/_index.md`). Posts in
+it get "Part N of M" and next/previous links automatically, and the series
+appears on `/series` automatically (`templates/series_index.html`); there is
+no hand-maintained list to update. Set the series' `description` in its
+`_index.md`; that is what `/series` shows.
+
+## Build and check
 
 ```bash
-# snapshot the LXC in Proxmox first
-./wp-recon.sh                      # already done; re-run after any DB change
-./wp2zola.py --src /root/wp-export --dest /root/zola-content
-less /root/zola-content/report.txt
+zola build
+zola check     # link checker; external failures are warnings
+zola serve     # local preview, includes drafts
 ```
 
-Check in `report.txt`, in this order:
+`zola build` deletes and recreates `public/`. Mount the whole project into
+both the `zola-build` and `nginx` containers; never mount a volume at
+`public/` itself.
 
-1. **UNHANDLED BLOCK TYPES** — should be empty. Anything listed needs a renderer.
-2. **BROKEN ASSET HOSTS** — the 6 `synology.regester.lan` references. Pull those
-   originals out of Synology Photos by hand and drop them into uploads.
-3. **URL REWRITES** — confirm every `10.0.0.132` rewrite is an image or a link.
-   None should come from inside a code block; the converter does not touch code
-   block contents, but read the list anyway.
-4. **TODO MARKERS** — grep the output for `<!-- TODO` and resolve each.
+## Deployment notes
 
-## 2. On the WordPress LXC — copy media
+- nginx config lives outside the repo (`nginx.conf`, gitignored). It handles
+  the WordPress leftovers: `/feed/` → `/rss.xml`, 410s for `wp-*` endpoints
+  and per-post comment feeds, date archives → `/archive/`, and the
+  first-party Plausible proxy (`/js/vx.js`, `/vx/event`).
+- **Syntax highlighting must stay `style = "class"`** in config.toml. tabi's
+  Content-Security-Policy (`style-src 'self'`) blocks inline styles, so
+  `"inline"` silently strips every colour and background from code blocks.
+- `i18n/en.toml` is a full copy of tabi's English strings (a site-level file
+  replaces the theme's, it does not merge). The only change is
+  `date_locale = "en_US"`. Re-copy it if you update tabi.
+- `static/favicon.*`, `static/apple-touch-icon.png` and
+  `static/social-card.jpg` (the link-preview image) are generated from the
+  banjo-cat logo.
 
-```bash
-tar czf /root/zola-content.tar.gz -C /root zola-content
+## Preview on GitHub Pages
 
-rsync -av \
-  --exclude='wp-statistics/' --exclude='astra-sites/' --exclude='astra-docs/' \
-  --exclude='wpo/' --exclude='1637/' --exclude='1638/' \
-  --exclude='*.mmdb' --exclude='.htaccess' --exclude='*.log' \
-  /var/www/wordpress/wp-content/uploads/ \
-  <dockerhost>:/path/to/site/static/wp-content/uploads/
-```
-
-Excluding `wp-statistics/` alone drops 51M of MaxMind GeoIP databases. Expect
-roughly 95M of real media to land, dominated by `2021/` at 89M.
-
-Two files in `2021/09` are 7.8M and 8.2M PNGs (`image-3.png`, `image-4.png`).
-They will work as-is but they are the whole page weight of those posts — worth
-an `oxipng -o4` pass or a resize once the site is up.
-
-## 3. On the Docker host — assemble
-
-```bash
-tar xzf zola-content.tar.gz
-cp zola-content/posts/*.md  /path/to/site/content/posts/
-cp zola-content/pages/*.md  /path/to/site/content/pages/    # overwrites about.md
-```
-
-Then verify every referenced asset actually exists:
-
-```bash
-cd /path/to/site/static
-while read -r p; do [ -f ".$p" ] || echo "MISSING $p"; done \
-  < /path/to/zola-content/assets-referenced.txt
-```
-
-## 4. Build
-
-```bash
-zola --root /path/to/site build
-zola --root /path/to/site check     # link checker; external failures are warnings
-```
-
-Remember gotcha #1 from last time: `zola build` deletes and recreates `public/`.
-Mount the whole project directory into both the `zola-build` and `nginx`
-containers — never mount a volume at `public/` itself.
-
-## 5. Go live
-
-Change `base_url` from `https://zola.thehelpfulidiot.com` to
-`https://thehelpfulidiot.com` at cutover. It is the only value that changes.
-
-nginx redirects for the WordPress URLs Zola has no equivalent for:
-
-```nginx
-location = /feed/            { return 301 /atom.xml; }
-location = /feed             { return 301 /atom.xml; }
-location ^~ /author/         { return 301 /; }
-location ^~ /wp-admin        { return 404; }
-location ^~ /wp-login.php    { return 404; }
-location ^~ /xmlrpc.php      { return 404; }
-```
+`.github/workflows/preview.yml` publishes a preview to
+<https://jon6fingrs.github.io/thehelpfulidiot-site/> on every push to `main`
+or a `claude/*` branch (or on demand from the Actions tab). It is noindex'd
+and has analytics stripped; production is unaffected. Because Pages serves
+from a subfolder, `.github/scripts/preview-fixup.py` prefixes the root-relative
+links in post content. One-time setup is described at the top of the
+workflow file.
 
 ## Known follow-ups
 
-- **Code fence languages.** WordPress core code blocks store no language, so all
-  110 fences arrive unlabelled and render plain. `error_on_missing_language` is
-  set to `false` so builds never break while you add them post by post.
-- **Plausible.** Not wired up. `[extra]` in tabi has analytics hooks; the
-  nginx first-party proxy from the last site transfers directly and you no
-  longer need the `code-snippets` PHP shim.
-- **Comments.** Off (`iine = false`). Old `#comments` anchors resolve to the page.
 - **Duplicate terms.** `self-hosting` and `smart-home` exist as both a category
-  and a tag. Worth collapsing in WordPress before a re-run, or by hand after.
-- **`hello-world` (post ID 1)** is published with a category and 3 tags. Confirm
-  it is real content and not the WordPress default before publishing.
-- **Drafts 173 and 221** have no slug; the converter generates one from the
-  title and sets `draft = true`, so they build only under `zola serve`.
+  and a tag. Both tag archives were in the WordPress sitemap, so removing the
+  tags would 404 indexed URLs. Leave them, or add nginx redirects first.
+- **Bulk `updated` dates.** Most posts carry `updated = 2024-04-15` or
+  `2024-04-09` from a WordPress bulk save, not real edits. The listing now
+  shows only the original date (`post_listing_date = "date"`); post pages
+  still show "Updated on". Delete the line from a post to drop it.
+- **Unreferenced uploads.** `python3 prune-uploads.py` (dry run) lists
+  originals no post uses, including two 8 MB PNGs in `2021/09/`. They may
+  still be linked from outside the site; quarantine, don't delete.

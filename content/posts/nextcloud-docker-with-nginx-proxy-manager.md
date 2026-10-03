@@ -3,13 +3,13 @@ title = "Nextcloud Docker with Nginx Proxy Manager"
 date = 2024-03-31
 updated = 2024-04-09
 path = "nextcloud-docker-with-nginx-proxy-manager"
-description = "Nextcloud has become an integral part of my work flow these days. I love having a \"place\" to go that's totally mine. I have been running it from a docker…"
+description = "Running the php-fpm Nextcloud Docker image directly behind Nginx Proxy Manager, without a second nginx container."
 
 [taxonomies]
 category = ["Self Hosting"]
 +++
 
-Nextcloud has become an integral part of my work flow these days. I love having a "place" to go that's totally mine. I have been running it from a [docker container](https://hub.docker.com/_/nextcloud) since before the[ AIO images](https://github.com/nextcloud/all-in-one) were available and so have not had a reason to change.
+Nextcloud has become an integral part of my work flow these days. I love having a "place" to go that's totally mine. I have been running it from a [docker container](https://hub.docker.com/_/nextcloud) since before the [AIO images](https://github.com/nextcloud/all-in-one) were available and so have not had a reason to change.
 
 The container comes in two flavors- Apache vs php-fpm. The I had been running the Apache version since it is generally easier, but always hated the idea of using Nginx Proxy Manager in front of Apache. It just seemed like a redundancy. Finally, I started to get some weird behaviors in Nextcloud which I tracked down as some webserver problem.
 
@@ -25,7 +25,7 @@ It turned out to be much easier than expected and I was essentially able to seam
 
 I did, however, update the nginx proxy configuration a bit from what was in that link to resolve various errors, to add the built-in collabora server, and to add push notifications.
 
-```
+```nginx
 	# set max upload size
         client_max_body_size 512M;
         fastcgi_buffers 64 4K;

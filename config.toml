@@ -47,10 +47,17 @@ bottom_footnotes = true
 external_links_class = "external"
 external_links_target_blank = false
 github_alerts = true
+# Adds loading="lazy" decoding="async" to every markdown image. Several posts
+# carry a dozen-plus screenshots; this keeps the first paint to what is visible.
+lazy_async_image = true
 
 [markdown.highlighting]
 theme = "catppuccin-frappe"
-style = "inline"
+# MUST be "class". "inline" emits style="" attributes on every token, and
+# tabi's CSP (style-src 'self') blocks those, so code blocks rendered with no
+# colours or background at all. "class" makes Zola generate giallo.css, which
+# tabi's header links automatically.
+style = "class"
 # 110 code blocks came out of WordPress with no language attribute. Leaving this
 # false means unlabelled fences render plain instead of failing the build, so you
 # can add languages post by post without breaking deploys.
@@ -73,11 +80,17 @@ skip_prefixes = [
 [extra]
 # --- appearance -------------------------------------------------------------
 theme_switcher = true
-default_theme = "dark"
+# default_theme unset: follow the visitor's OS/phone light-dark setting.
+# The switcher still lets them override it (remembered per browser).
 skin = "teal"
 browser_theme_color = ["#ffffff", "#1f1f1f"]
 override_serif_with_sans = true        # sans reads better for technical posts
 stylesheets = ["custom.css"]
+
+# Favicon and the fallback image for link previews (og:image / twitter:image).
+# Both generated from the banjo-cat logo; see static/.
+favicon = "favicon.png"
+social_media_card = "social-card.jpg"
 
 # Giscus loads a script and an iframe from giscus.app. tabi sets
 # enable_csp = true with script-src 'self', so without this the comment
@@ -101,7 +114,10 @@ force_codeblock_ltr = true
 show_author = false
 show_date = true
 show_reading_time = true
-post_listing_date = "both"
+# "date" rather than "both": most posts carry a bulk 2024-04 "updated" date
+# from WordPress, which made every listing entry read "Updated on 2024-04-15".
+# Post pages still show the updated date.
+post_listing_date = "date"
 show_previous_next_article_links = true
 long_date_format = "MMMM d, y"
 short_date_format = "y-MM-dd"
@@ -115,7 +131,7 @@ hide_table_of_contents_on_mobile = false
 # --- off for now ------------------------------------------------------------
 show_remote_changes = false
 show_remote_source = false
-iine = false                           # no comments on this site
+iine = false                           # like-buttons off; comments are giscus, below
 
 # --- footer -----------------------------------------------------------------
 footer_menu = [
