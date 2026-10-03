@@ -52,6 +52,11 @@ jobs:
       - name: Internal link check
         run: zola check --skip-external-links
 
+      # Front matter, code-fence languages, alt text, and CSP violations
+      # (inline style/script) in the built HTML. See scripts/check-site.py.
+      - name: Site checks
+        run: python3 scripts/check-site.py public
+
       - name: Adapt for the Pages subfolder
         run: python3 .github/scripts/preview-fixup.py public "${{ steps.pages.outputs.base_path }}"
 

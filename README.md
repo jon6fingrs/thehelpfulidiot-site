@@ -104,8 +104,10 @@ no hand-maintained list to update. Set the series' `description` in its
 
 ```bash
 zola build
-zola check     # link checker; external failures are warnings
-zola serve     # local preview, includes drafts
+zola check                          # link checker; external failures are warnings
+python3 scripts/check-site.py public # missing path/description/alt text, unlabelled
+                                    # code fences, CSP-breaking inline styles/scripts
+zola serve                          # local preview, includes drafts
 ```
 
 `zola build` deletes and recreates `public/`. Mount the whole project into
