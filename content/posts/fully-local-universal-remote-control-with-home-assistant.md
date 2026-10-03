@@ -3,7 +3,7 @@ title = "Fully Local Universal Remote Control with Home Assistant"
 date = 2024-02-11
 updated = 2024-04-09
 path = "fully-local-universal-remote-control-with-home-assistant"
-description = "I have had a Logitech Harmony remote solution for almost 10 years. In my opinion, it is a very nice product. It integrates nicely into Home Assistant, and…"
+description = "Replacing a discontinued Logitech Harmony with a cheap Bluetooth remote, a Python event listener, and Home Assistant automations, with no cloud involved."
 
 [taxonomies]
 category = ["Self Hosting"]
@@ -72,7 +72,7 @@ The following is a fork of the original git repo with the above mentioned and so
 
 Here is my version of bt_remote_event.py:
 
-```
+```python
 """
 Script to listen to events from a bluetooth remote control and send
 the events to Home Assistant.
@@ -211,7 +211,7 @@ The devices at 4, 6, and 7 represent the keyboards. The remote also can toggle i
 
 Anyway, if you try to access one of these devices, you will get:
 
-```
+```text
 Testing ... (interrupt to exit)
 ***********************************************
   This device is grabbed by another process.
@@ -232,7 +232,7 @@ Ok, so there are two things we have to accomplish.
 
 Luckily, there is one solution to accomplish both of these things- udev! I have added an example udev rule to my above linked git.
 
-```
+```text
 SUBSYSTEMS=="input", ATTRS{name}=="keyboard name from evtest", ENV{LIBINPUT_IGNORE_DEVICE}="1", SYMLINK+="remote_abc"
 ```
 
@@ -240,15 +240,15 @@ Each device will need its own file. Maybe it could be done with one, but I am no
 
 Anyway, my subsequent three files will look like:
 
-```
+```text
 SUBSYSTEMS=="input", ATTRS{name}=="2.4G Composite Devic Consumer Control", ENV{LIBINPUT_IGNORE_DEVICE}="1", SYMLINK+="remote_consumer"
 ```
 
-```
+```text
 SUBSYSTEMS=="input", ATTRS{name}=="2.4G Composite Devic System Control", ENV{LIBINPUT_IGNORE_DEVICE}="1", SYMLINK+="remote_system"
 ```
 
-```
+```text
 SUBSYSTEMS=="input", ATTRS{name}=="2.4G Composite Devic", ENV{LIBINPUT_IGNORE_DEVICE}="1", SYMLINK+="remote_keyboard"
 ```
 
@@ -258,7 +258,7 @@ Ok so those three files can be named whatever (99-ignore-my device-whatever.rule
 
 You can restart your system or enter the following command as root to activate the new rules:
 
-```
+```bash
 udevadm control --reload-rules && udevadm trigger
 ```
 
@@ -338,7 +338,7 @@ Ok, so now Home Assistant is getting all those key press events, but so what? I 
 First, I made a trigger based binary sensor to more easily display the button presses and the necessary information:
 
 {% raw %}
-```
+```yaml
   - trigger:
       - platform: event
         event_type: bt_remote
@@ -857,7 +857,7 @@ The majority of my actions involve identifying the button by name by matching to
 I want to point out one of the options though. The back of the remote has a keyboard! Wouldn't it be great to use it? I really don't want to make an option for every letter in the alphabet. Instead, I made a single option to capture anytime the key name is a single letter:
 
 {% raw %}
-```
+```yaml
       - conditions:
           - condition: template
             value_template: "    {{ trigger.to_state.attributes.button.split(\"_\")[1]|length == 1 }}"
@@ -890,7 +890,7 @@ to: "on"
 And my action block is in a repeat action and will continue to repeat, unless stopped, as long as the button remains "on" (pressed), and will stop when it is "off" released.
 
 {% raw %}
-```
+```yaml
 repeat:
   sequence:
     - choose:

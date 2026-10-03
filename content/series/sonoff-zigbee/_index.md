@@ -1,6 +1,7 @@
 +++
 title = "A Wired Sonoff Zigbee Alternative"
 template = "series.html"
+description = "Flashing Tasmota onto the EACHEN ZB-GW03 to get a wired Zigbee coordinator, and the run of firmware fixes that followed."
 transparent = true
 insert_anchor_links = "left"
 

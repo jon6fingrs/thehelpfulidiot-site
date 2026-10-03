@@ -3,7 +3,7 @@ title = "Alternative Front-ends for Popular Services"
 date = 2024-04-09
 path = "alternative-front-ends-for-popular-services"
 draft = true
-description = "It's no secret that the websites we all use each day extract more information from us than we often care to recognize. I am still not sure exactly the…"
+description = "Self-hosting privacy-respecting front-ends such as Whoogle for services like Google, Reddit and Twitter."
 
 [taxonomies]
 category = ["Self Hosting"]
@@ -35,10 +35,10 @@ In my opinion, this is the best/most important front-end on the list. Google lik
 
 Whoogle returns those same search results, but does so anonymously and does not allow Google to communicate directly with the client computer. The service is easily deployable through docker and can be set as a default search engine just like any other.
 
-![](/wp-content/uploads/2022/06/image-1.png)
+![Google](/wp-content/uploads/2022/06/image-1.png)
 *Google*
 
-![](/wp-content/uploads/2022/06/image-2.png)
+![Whoogle](/wp-content/uploads/2022/06/image-2.png)
 *Whoogle*
 
 As you can see, the results are extremely similar, except that Whoogle does not need me to sign in so that I can open speedtest.net.

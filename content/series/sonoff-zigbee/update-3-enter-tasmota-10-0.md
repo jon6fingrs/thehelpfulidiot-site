@@ -3,7 +3,7 @@ title = "UPDATE 3: ENTER TASMOTA 10.0"
 date = 2024-04-09
 path = "update-3-enter-tasmota-10-0"
 draft = true
-description = "I'm sorry for my negligence in keeping my posts uploaded. Have had a lot of things going on at home. Anyway, this should be the final update as Tasmota…"
+description = "Tasmota 10.0 fixes the ZB-GW03's Zigbee serial disconnects. How to upgrade from 9.x through a minimal intermediate firmware."
 
 [taxonomies]
 category = ["Smart Home"]
@@ -17,7 +17,7 @@ If you have been using the hub on Tasmota 9.x, you can update it to Tasmota 10.0
 
 First, let's disable the rules set previously just to be on the safe side.
 
-```
+```text
 backlog rule1 off; rule2 off; rule3 off
 ```
 
@@ -27,10 +27,10 @@ Next, Tasmota 10 is too large to update all at once, so we will first need to pe
 
 As of writing this post, the options for tasmota32 firmwares are limited on the official download page. However, as previously, there is an unofficial download page of custom firmwares which I imagine are part of the nightly schedule. Unfortunately, this means that the resulting firmware could break at any point. Download it to your computer, then go to your Zigbee Hub and select firmware upgrade:
 
-![](/wp-content/uploads/2021/12/tasmota-upgrade-1.jpg)
+![Firmware Upgrade](/wp-content/uploads/2021/12/tasmota-upgrade-1.jpg)
 *Firmware Upgrade*
 
 Then select the file location on your computer and click start upgrade:
 
-![](/wp-content/uploads/2021/12/tasmota-upgrade-2.jpg)
+![Upgrade step 2](/wp-content/uploads/2021/12/tasmota-upgrade-2.jpg)
 *Upgrade step 2*

@@ -6,6 +6,28 @@ pre code { white-space: pre; }
 article img { max-width: 100%; height: auto; border-radius: 4px; }
 article figure { margin-inline: 0; }
 
+/* Post images. Most were portrait phone photos or full-size screenshots that
+   rendered several screens tall; cap them to the viewport and centre them.
+   Clicking through still opens the full-size file. */
+.e-content p:has(> img) { text-align: center; }
+.e-content p > img {
+    display: block;
+    margin-inline: auto;
+    width: auto;
+    max-height: 75vh;
+    object-fit: contain;
+}
+
+/* Captions. WordPress image captions came over as an italic line directly
+   under the image (`![alt](src)` then `*caption*`), which renders as
+   <p><img> <em>…</em></p>. Style that <em> as a caption. */
+.e-content p:has(> img) > em {
+    display: block;
+    margin-top: 0.4rem;
+    color: var(--meta-color);
+    font-size: 0.85rem;
+}
+
 /* Categories and tags now both appear in the post listing (see the
    list_posts.html override). Distinguish the category chip so the two
    kinds of link don't read as one undifferentiated pile. */
@@ -15,3 +37,13 @@ article figure { margin-inline: 0; }
     font-size: 0.72rem;
     letter-spacing: 0.04em;
 }
+
+/* /series landing page (templates/series_index.html). */
+.series-list { list-style: none; padding: 0; margin-top: 2rem; }
+.series-item { padding-block: 1.5rem; border-bottom: 1px solid var(--divider-color); }
+.series-item:last-child { border-bottom: none; }
+.series-title { margin: 0; font-size: 1.4rem; }
+.series-title a { color: var(--text-color-high-contrast); text-decoration: none; }
+.series-title a:hover { color: var(--primary-color); }
+.series-meta { margin: 0.3rem 0 0.6rem; color: var(--meta-color); font-size: 0.85rem; }
+.series-description { margin: 0 0 0.8rem; }

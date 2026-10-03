@@ -3,7 +3,7 @@ title = "The Birth of a Smart Home"
 date = 2021-09-29
 updated = 2024-04-15
 path = "hello-world"
-description = "When the first Google Home came out in 2016, I briefly thought about buying it, but decided I had no use for it. Shortly after, my brother-in-law bought…"
+description = "How a couple of smart plugs turned into a Proxmox server, VLANs, and a fully self-hosted smart home: the network behind this blog."
 
 [taxonomies]
 category = ["Self Hosting"]
@@ -20,7 +20,7 @@ After a few months, I came across a Reddit Post about [Mozilla Webthings](https:
 
 Below is a diagram of my current setup:
 
-![](/wp-content/uploads/2021/09/Network-Diagram-1-1024x576.png)
+![Network Diagram](/wp-content/uploads/2021/09/Network-Diagram-1-1024x576.png)
 *Network Diagram*
 
 Initially, I migrated everything to the fewest number of boxes as possible. This scared me since there was only a single point of failure. More recently, I have purchased very cheap celeron computers from Amazon Warehouse and have used a few to host various services.

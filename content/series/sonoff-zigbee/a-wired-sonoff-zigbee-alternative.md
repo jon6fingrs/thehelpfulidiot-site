@@ -3,7 +3,7 @@ title = "A Wired Sonoff Zigbee Alternative"
 date = 2021-09-29
 updated = 2024-04-15
 path = "a-wired-sonoff-zigbee-alternative"
-description = "Many of us have seen the Sonoff Zigbee Hub and how easy it is to flash to Tasmota thanks to many awesome videos and my personal favorite by DigiblurDIY…"
+description = "Compiling and flashing Tasmota onto the EACHEN eWeLink ZB-GW03, an ESP32-based Zigbee bridge with Ethernet, for a wired coordinator that works with ZHA or Zigbee2MQTT."
 
 [taxonomies]
 category = ["Smart Home"]
@@ -22,24 +22,24 @@ Recently, another amazing individual going by Tube has created a homemade Franke
 
 I came across another wired zigbee hub using an ESP32 - [the EACHEN Zigbee Bridge Pro](https://ewelink.eachen.cc/product/eachen-ewelink-zigbee-bridge-pro-zbbridge-pro/). For only $30, I thought I would give it a try. It shipped from China, but arrived fairly quickly after only a couple of weeks.
 
-![](/wp-content/uploads/2021/09/IMG_8685-1024x768.jpg)
+![The hub](/wp-content/uploads/2021/09/IMG_8685-1024x768.jpg)
 *The hub*
 
-![](/wp-content/uploads/2021/09/IMG_8686-1024x768.jpg)
+![An ethernet port, a USB-C power port, and a reset pin hole](/wp-content/uploads/2021/09/IMG_8686-1024x768.jpg)
 *An ethernet port, a USB-C power port, and a reset pin hole*
 
 The device is probably the same size as the Sonoff Zigbee Router. It is easy enough to disassemble though since there are no screws and the bottom can simply be pried off.
 
-![](/wp-content/uploads/2021/09/IMG_8688-1024x768.jpg)
+![The board](/wp-content/uploads/2021/09/IMG_8688-1024x768.jpg)
 *The board*
 
 The board pops right out. It is now ripe for flashing and you can see some solder still on mine. My experience with Tasmota so far had been with mainly Tuya-convert and flashing the Sonoff Zigbee router which did not require soldering. This was my first time soldering and was way more fun than I expected.
 
-Now before we get to soldering and flashing, we need to compile our own Tasmota firmware. We need to make sure Tasmota has access to the Ethernet port and the Zigbee Radio. As in all things Tasmota, [Blakadder ](https://templates.blakadder.com/ewelink_ZB-GW03)has a page devoted to this device and instructions. The instructions were excellent, but assumed a certain level of knowledge to compile the firmware. Having not done this before, this part took me the longest. The tasmota32-zigbeebridge precompiled firmware mentioned on the site did not provide ethernet access or else this process would have been a lot easier.
+Now before we get to soldering and flashing, we need to compile our own Tasmota firmware. We need to make sure Tasmota has access to the Ethernet port and the Zigbee Radio. As in all things Tasmota, [Blakadder](https://templates.blakadder.com/ewelink_ZB-GW03) has a page devoted to this device and instructions. The instructions were excellent, but assumed a certain level of knowledge to compile the firmware. Having not done this before, this part took me the longest. The tasmota32-zigbeebridge precompiled firmware mentioned on the site did not provide ethernet access or else this process would have been a lot easier.
 
 After much trial and error, the easiest way I found to compile this firmware was by going to [GitPod](https://gitpod.io/#https://github.com/arendst/Tasmota/tree/master). After you log in, you are taken to a VS code window prepopulated with the latest Tasmota build.
 
-![](/wp-content/uploads/2021/09/gitpod-1024x493.png)
+![Tasmota repository opened in a GitPod workspace](/wp-content/uploads/2021/09/gitpod-1024x493.png)
 
 The instructions from Blakadder's website say to edit two files- user_config_override.h and platform_override.ini.
 
@@ -53,7 +53,7 @@ board_build.f_flash     = 40000000L
 build_flags             = ${env:tasmota32_base.build_flags} -DFIRMWARE_EWELINK
 ```
 
-![](/wp-content/uploads/2021/09/image-2-1024x395.png)
+![platformio_override.ini with the tasmota32-EWELINK environment added](/wp-content/uploads/2021/09/image-2-1024x395.png)
 
 Now find the 'user_config_override.h' file which is located in the tasmota subdirectory (/workspace/Tasmota/tasmota). Open that file, erase all its contents and replace with:
 
@@ -89,7 +89,7 @@ Ok, so those two parts were relatively easy, but the next part on how to compile
 platformio run -e tasmota32-EWELINK
 ```
 
-![](/wp-content/uploads/2021/09/image-1-1024x321.png)
+![GitPod terminal running platformio run -e tasmota32-EWELINK](/wp-content/uploads/2021/09/image-1-1024x321.png)
 
 Now wait patiently for the new firmware to compile. Once it does, it can be found in /workspace/Tasmota/build_output/firmware. Download 'tasmota32-EWELINK.bin.
 
@@ -107,10 +107,10 @@ Ok, now that we have the firmware, it's time to start flashing. Since we have an
 
 Now the fun part with soldering. Below I have a photo of the ESP32 board and the corresponding connection on my Serial Adapter (I use this [one](https://www.amazon.com/gp/product/B00IJXZQ7C/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1)).
 
-![](/wp-content/uploads/2021/09/image-3-1024x767.png)
+![ESP32 board - labels point to corresponding pin on Serial Converter](/wp-content/uploads/2021/09/image-3-1024x767.png)
 *ESP32 board - labels point to corresponding pin on Serial Converter*
 
-![](/wp-content/uploads/2021/09/image-4-1024x770.png)
+![Serial Converter - labels point to corresponding pin on ESP32](/wp-content/uploads/2021/09/image-4-1024x770.png)
 *Serial Converter - labels point to corresponding pin on ESP32*
 
 Now Flash.
@@ -119,7 +119,7 @@ Once you finish, it's a matter of setting up Tasmota and a few more finishing to
 
 Set up Tasmota through the access point first and add this Template by issuing the following command:
 
-```
+```text
 backlog Template {"NAME":"ZB-GW03-V1.2","GPIO":[0,0,3552,0,3584,0,0,0,5793,5792,320,544,5536,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,608,640,32,0,0,0,0,0],"FLAG":0,"BASE":1} ; module 0
 ```
 
@@ -127,7 +127,7 @@ From this [website](https://github.com/arendst/Tasmota/tree/development/tools/fw
 
 Now try plugging the device in to Ethernet. I noticed it was sort of strange and took a couple reboots and unplugging and plugging the cable back in, but I saw messages about setting up the Eth connection in the console. There was no real way to change Ethernet settings like you can with WiFi, but I noticed two DHCP listings in my router. Once Ethernet is set up, you can disconnect WiFi with the following, but do not do the following until Ethernet is set up! Make sure the first command turning WiFi off works first before applying the subsequent rule which will disable it on each reboot. The first command by itself will not persist across reboots.
 
-```
+```text
 Wifi 0
 backlog rule2 on system#boot do Wifi 0 endon ; rule2 1
 ```
@@ -138,7 +138,7 @@ The device is now set up to use with [Zigbee2Tasmota](/how-to-use-zigbee2tasmota
 
 To integrate with Home Assistant, we must remap the Zigbee Tx and Zigbee Rx pins directly to TCP Tx and TCP Rx. This will disable Zigbee2Tasmota, but will allow the device to integrate with Home Assistant. Use the following command to update the template:
 
-```
+```text
 backlog template {"NAME":"ZHA-bridge","GPIO":[0,0,5472,0,5504,0,0,0,5793,5792,320,544,5536,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,608,640,32,0,0,0,0,0],"FLAG":0,"BASE":1} ; module 0
 ```
 
@@ -146,7 +146,7 @@ Notice the change in the third and fifth positions. Afterwards, it will be possi
 
 Enter the following from the console to turn on the webserver for the Zigbee radio:
 
-```
+```text
 backlog rule1 on system#boot do TCPStart 8888 endon ; rule1 1 ; tcpstart 8888
 ```
 
@@ -164,7 +164,7 @@ A reader working through this guide found a cleaner approach that avoids the
 ZHA/Z2T toggling described above entirely. Rather than the `ZHA-bridge`
 template, use:
 
-```
+```text
 backlog template {"NAME":"Zig_Bridge32","GPIO":[1,1,5472,1,5504,1,1,1,5793,5792,320,544,5536,1,5600,1,0,1,1,5568,0,1,1,1,0,0,0,0,608,640,32,1,1,3552,3584,1],"FLAG":0,"BASE":1}; module 0;
 ```
 

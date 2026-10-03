@@ -3,7 +3,7 @@ title = "Making an Automatic Email Backup (Updated 9/15/2024)"
 date = 2024-09-15
 updated = 2024-09-16
 path = "making-an-automatic-email-backup-updated-9-15-2024"
-description = "This is basically an update to the project I discussed in these three previous posts:"
+description = "A new version of the mbsync and Dovecot Docker images, now with Solr full-text search for fast IMAP searches."
 
 [taxonomies]
 category = ["Self Hosting"]
@@ -11,11 +11,9 @@ category = ["Self Hosting"]
 
 This is basically an update to the project I discussed in these three previous posts:
 
-Part 1 - [https://thehelpfulidiot.com/making-an-automatic-email-backup](/making-an-automatic-email-backup)
-
-Part 2 -[https://thehelpfulidiot.com/making-an-automatic-email-backup-part-2](/making-an-automatic-email-backup-part-2)
-
-Part 3 - [https://thehelpfulidiot.com/making-an-automatic-email-backup-part-3](/making-an-automatic-email-backup-part-3)
+- [Part 1](/making-an-automatic-email-backup)
+- [Part 2](/making-an-automatic-email-backup-part-2)
+- [Part 3](/making-an-automatic-email-backup-part-3)
 
 I have been using this method of backing up emails for the past several years and have been very please with the reliability. It has not required any modification or tinkering and has just seemed to work.
 

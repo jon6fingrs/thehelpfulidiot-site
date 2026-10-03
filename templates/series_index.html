@@ -1,0 +1,48 @@
+{% extends "index.html" %}
+
+{#- Landing page for /series. Lists every subsection of content/series/ that
+    sets `extra.series = true`, so a new series appears here automatically —
+    no hand-maintained list to keep in sync. Drafts are excluded by Zola
+    before they reach section.pages, so part counts match what is published. -#}
+
+{% block main_content %}
+
+{{< page_header title={section.title} />}}
+
+{%- if section.content %}
+<section class="series-intro">
+    {{ section.content | safe }}
+</section>
+{%- endif %}
+
+{%- set all_series = [] -%}
+{%- for path in section.subsections -%}
+    {%- set s = get_section(path=path) -%}
+    {%- if s.extra.series and s.pages | length > 0 -%}
+        {%- set_global all_series = [...all_series, s] -%}
+    {%- endif -%}
+{%- endfor %}
+
+<ul class="series-list">
+{%- for s in all_series %}
+    {#- sort_by = "date" puts section.pages newest-first. -#}
+    {%- set oldest = s.pages | last -%}
+    {%- set newest = s.pages | first -%}
+    {%- set first_year = oldest.date | date(format="%Y") -%}
+    {%- set last_year = newest.date | date(format="%Y") -%}
+    <li class="series-item">
+        <h2 class="series-title"><a href="{{ s.permalink | safe }}">{{ s.title }}</a></h2>
+        <p class="series-meta">
+            {{ s.pages | length }} parts
+            {{ config.extra.separator | default(value="•") }}
+            {{ first_year }}{% if last_year != first_year %}–{{ last_year }}{% endif %}
+        </p>
+        {%- if s.description %}
+        <p class="series-description">{{ s.description }}</p>
+        {%- endif %}
+        <a class="readmore" href="{{ s.permalink | safe }}">Start reading&nbsp;<span class="arrow">→</span></a>
+    </li>
+{%- endfor %}
+</ul>
+
+{% endblock main_content %}
