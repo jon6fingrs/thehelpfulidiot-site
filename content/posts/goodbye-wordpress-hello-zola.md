@@ -11,18 +11,22 @@ tag = ["home lab", "wordpress", "zola"]
 
 It has been a while. My last post was the [email backup update](/making-an-automatic-email-backup-updated-9-15-2024) back in September 2024, and since then this blog has mostly just... sat there. Running. Asking me for updates.
 
-That last part is the problem. This site lived in a TurnKey WordPress LXC on my Proxmox box. WordPress, Apache, PHP, MySQL, a theme, and a handful of plugins, all of which needed updating constantly to serve a few posts that almost never change. Every time I logged in there was a new red bubble asking me to update something.
+That last part is the problem.
 
-So I finally did what I should have done years ago: I turned it into a static site. If you're reading this, you're looking at it.
+When I started this blog, it lived in a managed WordPress container on IONOS. Eventually it dawned on me that I already self host basically everything else, and I already had Traefik with Let's Encrypt certificates set up. Why was I paying someone else to host a blog? So I used a backup plugin to pack the whole site up, brought it home, and restored it into a TurnKey Linux WordPress LXC sitting behind Traefik.
 
-![Before: a WordPress LXC running Apache, PHP, MySQL and plugins. After: Markdown files built by Zola and served as plain files by an nginx container](/img/2026/10/before-after.png)
-*Same blog, a lot fewer moving parts*
+That saved some money, but now *I* was the one keeping WordPress, Apache, PHP, MySQL, a theme, and a handful of plugins up to date, all to serve a few posts that almost never change. Every time I logged in there was a new red bubble asking me to update something.
+
+Then I was listening to [Linux Unplugged episode 683](https://linuxunplugged.com/683), heard them talking about Zola, and figured it was worth a shot. If you're reading this, you're looking at the result.
+
+![Three stages of this blog: managed WordPress on IONOS, then a TurnKey WordPress LXC behind Traefik at home, and now Zola's static files served by an nginx container behind the same Traefik](/img/2026/10/before-after.png)
+*Same blog, three homes, a lot fewer moving parts*
 
 ## Why Zola
 
 A static site generator takes a folder of Markdown files and spits out plain HTML. No database, no PHP, no admin login for bots to hammer on. The web server just hands out files.
 
-There are a lot of these ([Hugo](https://gohugo.io/), [Jekyll](https://jekyllrb.com/), etc.), but I went with [Zola](https://www.getzola.org/). It's a single binary with no dependencies, it builds this whole site in a few seconds, and I already had it running in a docker container from a practice site I had been playing with.
+There are a lot of these ([Hugo](https://gohugo.io/), [Jekyll](https://jekyllrb.com/), etc.), but I went with [Zola](https://www.getzola.org/). It's a single binary with no dependencies, and it builds this whole site in a few seconds. I tried it out on a practice site first before committing to moving this one.
 
 For the theme, I went with [tabi](https://github.com/welpo/tabi). I had been using a different theme on the practice site, but when I actually counted, this blog has **110 code blocks** and **64 images**. It's basically a pile of config files with some words in between. tabi comes with search, tag and category pages, and syntax highlighting with a copy button already built in. The other theme would have needed all three made by hand.
 
@@ -38,7 +42,7 @@ Since I have root on the container, I skipped all that. [WP-CLI](https://wp-cli.
 ![The migration pipeline: MySQL, then wp-recon.sh, then wp2zola.py, then postfix.py, then Zola with the tabi theme](/img/2026/10/pipeline.png)
 *The whole migration, start to finish*
 
-I'll be honest, I did not sit down and write a block-aware WordPress converter in Python by myself. I worked through this with Claude (the AI), which wrote most of the scripts while I made the decisions, ran things, and broke things. Fitting for a blog called The Helpful Idiot.
+I'll be honest, I did not sit down and write a block-aware WordPress converter in Python by myself. I leaned on Claude (the AI) pretty heavily for this whole project. It wrote most of the scripts, and I made the decisions, ran things, and broke things. Seems fitting for a blog called The Helpful Idiot.
 
 ## Look Before You Leap
 
@@ -51,7 +55,7 @@ The first script, `wp-recon.sh`, doesn't change anything. It just surveys what's
 | 146M of uploads to move | ~95M. The other 51M was GeoIP databases from a stats plugin |
 | A quick find-and-replace for my server's local IP | It shows up 11 times, and some of those are *supposed* to be there |
 
-That last one is the best example. The WordPress container's local IP had leaked into a few posts through image links. The first suggestion was a database-wide search-and-replace. But recon showed that same IP is also sitting inside a few of my tutorials as a perfectly legitimate example config value. A blind find-and-replace would have quietly broken the instructions people actually copy and paste.
+That last one is the best example. The WordPress container's local IP had leaked into a few posts through image links. Claude's first suggestion was a database-wide search-and-replace. But recon showed that same IP is also sitting inside a few of my tutorials as a perfectly legitimate example config value. A blind find-and-replace would have quietly broken the instructions people actually copy and paste.
 
 So instead, the converter only rewrites URLs inside image, link, and file blocks, and leaves code blocks byte-for-byte identical.
 
@@ -116,17 +120,35 @@ tabi ships with a strict Content Security Policy, which basically tells the brow
 
 ### nginx doesn't like curly braces either
 
-Old WordPress date archive links (`/2021/09/` and so on) now redirect to the [archive page](/archive). My first attempt broke the nginx config, because nginx reads `{` as the start of a block, even inside a regex. The regex needs quotes:
+The old sidebar linked to WordPress's monthly archives (`/2021/09/` and so on), and Google has those indexed. Zola doesn't make those pages, so they redirect to the [archive page](/archive) instead. My first attempt broke the nginx config, because nginx reads `{` as the start of a block, even inside a regex. The whole regex needs to be in quotes:
 
 ```nginx
-# Broken: nginx thinks {4} starts a block
-location ~ ^/[0-9]{4}/ { return 301 /archive/; }
-
-# Works
-location ~ "^/[0-9]{4}/" { return 301 /archive/; }
+location ~ "^/[0-9]{4}(/[0-9]{2})?(/[0-9]{2})?/?$" { return 301 /archive/; }
 ```
 
 Lesson learned (again): run `nginx -t` *before* restarting, not after.
+
+## Keeping Old Links Alive
+
+Everything that matters (posts, categories, tags, page 2, images) has the exact same URL as before, so it needs no rules at all. The nginx config in front of the site only has to deal with the WordPress leftovers.
+
+The most important one is the feed, since WordPress served it at `/feed/` and people actually subscribe to it:
+
+```nginx
+location = /feed  { return 301 /rss.xml; }
+location = /feed/ { return 301 /rss.xml; }
+```
+
+The rest is WordPress's admin and login pages. Bots probe these constantly, and they now get a `410 Gone` instead of a login page:
+
+```nginx
+location ^~ /wp-admin    { return 410; }
+location ^~ /wp-includes { return 410; }
+location = /wp-login.php { return 410; }
+location = /xmlrpc.php   { return 410; }
+```
+
+`410` tells search engines the page is gone for good, and it's a tiny response instead of a full styled 404 page for every bot that comes knocking. Just be careful not to block all of `/wp-content/`, since that's where every image on this site still lives.
 
 ## Cleaning Up
 
