@@ -1,0 +1,19 @@
+{#- OVERRIDE of tabi's partials/home_banner.html.
+    Upstream repeats the site name as a big <h1> right under the header,
+    so on phones the name appeared twice, the second time larger. Here the
+    tagline (extra.header.title) is the heading and the logo sits beside
+    the text at every width. -#}
+{%- set header = section?.extra?.header -%}
+<div id="banner-container-home" class="thi-hero">
+    <div id="home-banner-text">
+        <h1 id="home-banner-header">{{ header.title }}</h1>
+        <section id="banner-home-subtitle">
+            {{ section.content | safe }}
+        </section>
+    </div>
+    {%- if header.img %}
+    <div id="image-container-home">
+        <img alt="{{ header.img_alt | default(value='') }}" id="banner-home-img" src="{{ get_url(path=header.img, trailing_slash=false) | safe }}" />
+    </div>
+    {%- endif %}
+</div>
