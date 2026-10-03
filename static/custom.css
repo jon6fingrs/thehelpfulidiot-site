@@ -70,10 +70,23 @@ article figure { margin-inline: 0; }
 }
 .nav-desktop-links > ul { display: flex; }
 .nav-mobile-toggle { display: none; }
-.nav-mobile > summary { display: flex; cursor: pointer; list-style: none; }
+/* summary is display:block, not flex: WebKit (every iOS browser) can fail
+   to toggle a <details> whose summary is a flex container. */
+.nav-mobile > summary { display: block; cursor: pointer; list-style: none; line-height: 0; -webkit-tap-highlight-color: transparent; }
 .nav-mobile > summary::-webkit-details-marker { display: none; }
 .nav-mobile > summary svg { width: 1.6rem; height: 1.6rem; fill: var(--text-color); }
 .nav-mobile:not([open]) .nav-mobile-panel { display: none !important; }
+/* While open, an invisible full-screen layer belongs to the summary, so a tap
+   anywhere outside the panel is a tap on the summary and closes the menu.
+   Needed because iOS does not fire click events for taps on plain page
+   areas, so a document-level "click outside" listener never runs there. */
+.nav-mobile[open] > summary::before {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    cursor: default;
+    content: "";
+}
 
 /* Homepage hero (templates/partials/home_banner.html). Selectors repeat
    tabi's ids so they outrank its _home-banner.scss rules. */
