@@ -130,9 +130,6 @@ both the `zola-build` and `nginx` containers; never mount a volume at
 
 ## Known follow-ups
 
-- **Two drafts** are dated 2024-04-09 and only build under `zola serve`:
-  `update-3-enter-tasmota-10-0` (finishes the Sonoff series) and
-  `alternative-front-ends-for-popular-services`. Publish or delete them.
 - **Duplicate terms.** `self-hosting` and `smart-home` exist as both a category
   and a tag. Both tag archives were in the WordPress sitemap, so removing the
   tags would 404 indexed URLs. Leave them, or add nginx redirects first.

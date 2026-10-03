@@ -80,7 +80,8 @@ skip_prefixes = [
 [extra]
 # --- appearance -------------------------------------------------------------
 theme_switcher = true
-default_theme = "dark"
+# default_theme unset: follow the visitor's OS/phone light-dark setting.
+# The switcher still lets them override it (remembered per browser).
 skin = "teal"
 browser_theme_color = ["#ffffff", "#1f1f1f"]
 override_serif_with_sans = true        # sans reads better for technical posts
