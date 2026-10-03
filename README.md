@@ -128,6 +128,16 @@ both the `zola-build` and `nginx` containers; never mount a volume at
   `static/social-card.jpg` (the link-preview image) are generated from the
   banjo-cat logo.
 
+## Preview on GitHub Pages
+
+`.github/workflows/preview.yml` publishes a preview to
+<https://jon6fingrs.github.io/thehelpfulidiot-site/> on every push to `main`
+or a `claude/*` branch (or on demand from the Actions tab). It is noindex'd
+and has analytics stripped; production is unaffected. Because Pages serves
+from a subfolder, `.github/scripts/preview-fixup.py` prefixes the root-relative
+links in post content. One-time setup is described at the top of the
+workflow file.
+
 ## Known follow-ups
 
 - **Duplicate terms.** `self-hosting` and `smart-home` exist as both a category
