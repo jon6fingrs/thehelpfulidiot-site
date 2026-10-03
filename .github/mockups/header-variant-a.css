@@ -1,0 +1,13 @@
+/* Variant A: hamburger dropdown on phones. */
+@media only screen and (max-width: 600px) {
+    .nav-desktop-links { display: none; }
+    .nav-mobile-toggle { display: flex; position: relative; }
+    .nav-mobile-panel {
+        position: absolute; right: 0; top: 2.6rem; z-index: 50;
+        display: flex !important; flex-direction: column; align-items: stretch !important;
+        min-width: 12rem; padding: 0.4rem !important;
+        background: var(--background-color); border: 1px solid var(--divider-color);
+        border-radius: 10px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+    }
+    .nav-mobile-panel .nav-links { display: block; padding: 0.2rem 0.9rem; font-size: 1.05rem; }
+}

@@ -1,0 +1,11 @@
+/* Variant B: links stay visible as one swipeable row under the title bar. */
+@media only screen and (max-width: 600px) {
+    .navbar { flex-wrap: wrap; }
+    .nav-navs, .nav-navs > ul { display: contents; }
+    .nav-title { order: 1; flex: 1; }
+    .menu-icons-container { order: 2; }
+    .nav-desktop-links { order: 3; flex: 0 0 100%; overflow-x: auto; scrollbar-width: none; margin-top: 0.5rem;
+        border-top: 1px solid var(--divider-color); border-bottom: 1px solid var(--divider-color); }
+    .nav-desktop-links > ul { flex-wrap: nowrap !important; justify-content: space-between !important; width: 100%; }
+    .nav-desktop-links .nav-links { line-height: 2.2; padding: 0.3rem 0.55rem; font-size: 0.98rem; white-space: nowrap; }
+}
