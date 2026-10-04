@@ -2,7 +2,7 @@
 title = "Rewriting My Home Assistant Dashboards in Plain HTML"
 date = 2026-10-04
 path = "rewriting-my-home-assistant-dashboards-in-plain-html"
-description = "I replaced the Lovelace dashboards on the wall tablets around my house with small hand-written HTML and JavaScript pages that talk to Home Assistant over one websocket. Here's what they look like and how they work."
+description = "The Lovelace dashboards on the wall tablets around my house were slow and kept reloading, so Claude and I replaced them with small HTML and JavaScript pages that talk to Home Assistant over one websocket. Here's what they look like and how they work."
 
 [taxonomies]
 category = ["Smart Home"]
@@ -11,9 +11,11 @@ tag = ["home assistant", "claude", "dashboard"]
 
 There are tablets on the walls all over my house. A Fire HD 10 in the family room, another one in the basement, a Lenovo StarView next to the TV that works as a remote, and one in each of the kids' rooms. (I've [3D printed mounts for these before](/custom-3d-printed-mount-for-fire-tablet-2015).) They are how most of my family actually uses Home Assistant.
 
-For years they all ran regular Home Assistant dashboards (Lovelace) in a kiosk browser. Lovelace is great, and it's how I'd start anyone off. But on older, cheaper tablets, the full Home Assistant frontend is a lot to ask for. Every tablet was loading the entire app just to show a few buttons, and some of them felt it.
+For years they all ran regular Home Assistant dashboards (Lovelace) in a kiosk browser. And on these tablets, Lovelace was *heavy*. Every one of them was loading the entire Home Assistant app just to show a few buttons. Taps would hang for a while before anything happened, and the pages kept reloading on their own, usually right when someone was trying to turn off a light.
 
-So the dashboards got rewritten as plain HTML and JavaScript. No framework, no build step, no npm. Each tablet loads one small page that talks directly to Home Assistant. This post goes along with my [Home Assistant cleanup post](/cleaning-up-six-years-of-home-assistant-with-claude), and like that project, I did it with a lot of help from Claude.
+So the dashboards got rewritten as plain HTML and JavaScript. No framework, no build step, no npm. Each tablet loads one small page that talks directly to Home Assistant.
+
+And in the spirit of this blog's name, I should be upfront: I didn't write this. Claude (the AI from Anthropic) basically wrote all of it. I told it what each tablet needed to do, tried every version on the actual tablets, and reported back what was broken or annoying. Then it fixed it. More on how that went at the end.
 
 Here's the main one, in the family room:
 
@@ -52,7 +54,7 @@ The portrait tablets all share the same building blocks. Here are the kid's room
 ![The StarView TV remote: Kodi, Roku and Apple TV source buttons on top, big volume buttons on the left, a direction pad, and play, stop, all off and intercom buttons at the bottom](/img/2026/10/dash-starview-remote.png)
 *The StarView next to the TV is just a remote. The active source is highlighted.*
 
-That last one matters. One of the rules I set for the whole Home Assistant cleanup was that nothing my family already knows how to use is allowed to change on them. So each new page started as a copy of the old Lovelace layout, button for button, and only then got cleaned up.
+That last one matters. My one hard rule was that nothing my family already knows how to use is allowed to change on them. So each new page started as a copy of the old Lovelace layout, button for button, and only then got cleaned up.
 
 ### A Whole-House Intercom
 
@@ -158,11 +160,19 @@ Every screenshot in this post came from the real dashboard code, but not from my
 
 That fake turned out to be useful for more than blog posts. Most of the fixes above were tested exactly that way: a stand-in Home Assistant, and a stand-in intercom that fails to load twice before it works, to check that the page recovers on its own.
 
+## Letting Claude Write It
+
+I'm not a web developer. I can read JavaScript well enough to follow along, but about 3,500 lines of it, plus an in-browser intercom, was never going to come out of me.
+
+The dashboards live in their own Git repo on GitHub, and Claude worked on them the same way every time: it worked on a branch, explained what it changed and how it tested it, and I merged it and copied the folder into Home Assistant's `www` folder. Then I went and poked at the actual tablets.
+
+That last part was my real job. Claude can test a page in a headless browser all day, but it can't tell that a button is too small for a kid's finger, or that the intercom stops working after the power goes out at 3 AM. Most of the fixes in the section above started with me saying "this thing did something weird," and Claude figuring out why.
+
 ## Was It Worth It?
 
-For us, yes. The tablets are faster, they come back on their own after the power goes out, and every page shows exactly what that room needs and nothing else. And because each page is just a short HTML file, changing a button is a one-line edit, not a trip through the dashboard editor on a tablet.
+For us, yes. Taps respond right away, the random reloads are gone, the tablets come back on their own after the power goes out, and every page shows exactly what that room needs and nothing else. And because each page is just a short HTML file, changing a button is a one-line edit, not a trip through the dashboard editor on a tablet.
 
-Would I tell everyone to do this? Probably not. Lovelace is the right answer for most people, and it doesn't need you to write any code. But if you have some older tablets on your walls that feel sluggish, a page that only knows about the twenty entities it shows is a surprisingly small amount of code.
+Would I tell everyone to do this? Probably not. Lovelace is still the right answer for most people, especially on a decent tablet or a phone, and it doesn't need any code. But if you have some older tablets on your walls that hang and reload like mine did, a page that only knows about the twenty entities it shows is a surprisingly small amount of code.
 
 Let me know in the comments if you'd like me to go deeper on any of these cards, or the intercom.
 
