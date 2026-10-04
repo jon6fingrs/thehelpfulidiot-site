@@ -15,7 +15,7 @@ For years they all ran regular Home Assistant dashboards (Lovelace) in a kiosk b
 
 So the dashboards got rewritten as plain HTML and JavaScript. No framework, no build step, no npm. Each tablet loads one small page that talks directly to Home Assistant.
 
-And in the spirit of this blog's name, I should be upfront: I didn't write this. Claude (the AI from Anthropic) basically wrote all of it. I told it what each tablet needed to do, tried every version on the actual tablets, and reported back what was broken or annoying. Then it fixed it. More on how that went at the end.
+And in the spirit of this blog's name, I should be upfront: I didn't write the code for these dashboards. Claude (the AI from Anthropic) basically wrote all of it. I told it what each tablet needed to do, tried every version on the actual tablets, and reported back what was broken or annoying. Then it fixed it. More on how that went at the end.
 
 Here's the main one, in the family room:
 
