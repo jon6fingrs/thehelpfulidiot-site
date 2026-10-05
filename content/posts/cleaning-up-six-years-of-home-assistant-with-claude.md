@@ -198,6 +198,10 @@ Home Assistant can do both in one automation using trigger IDs and a `choose`. E
 
 Here's the trick that made me trust it: for every merge, Claude spun up a test instance of Home Assistant with the *old* automations and another with the *new* one, with every service call stubbed out so nothing real happened. Then it fed both the same random sequence of motion and light changes (with the 10-minute delays sped up to 1 second) and compared every single service call. They had to match exactly.
 
+The door auto-locks got the most thorough version of this. Nine automations ran the front and back door countdowns (start when the door closes, cancel when it opens, lock when the timer ends, restart at 10 minutes on arrival), and they became one per door. To check it, Claude modeled the old nine and the new two, and ran both through **40,000 random sequences** of doors opening, locks changing, people arriving, Home Assistant restarting and time passing. They locked at exactly the same moments every time.
+
+I'll admit that when I saw "40,000 simulations" go by for my back door, I laughed out loud. Is that overkill for a door lock? Absolutely. It's also the automation I least want to be wrong about, and it cost me nothing but a few minutes of waiting.
+
 It also knew when *not* to merge. One of my kids' bedroom lights and the half bath both end with a long `delay` used as a "hold." Merged into one automation, that hold would have blocked the other branch from running, so they stayed separate. Same for a couple of automations that read their own `last_triggered` time.
 
 The merges, all told:
@@ -205,6 +209,7 @@ The merges, all told:
 | Before | After | How it was checked |
 |---|---|---|
 | 9 "light switch control" automations, one per room | **1** "Light switch buttons" | every switch × every button press, identical light calls |
+| 9 front and back door auto-lock automations | **2**, one per door | 40,000 random event sequences, identical lock decisions |
 | 22 motion-light automations | **11**, one per room | random motion and light sequences in every room |
 | 9 circadian and hallway-dimming automations | **3** | old vs new, identical calls |
 | 14 fan and speaker-volume automations | **3** | old vs new, identical calls |
