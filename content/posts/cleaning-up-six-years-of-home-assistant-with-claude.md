@@ -18,33 +18,69 @@ It worked, mostly. My family uses it every day. And that was exactly why I never
 
 So I did what I did with [this blog](/goodbye-wordpress-hello-zola): I sat down with Claude, an AI from Anthropic, and we cleaned it up together. Claude did most of the reading, writing and testing. I made the decisions, answered a lot of questions about my house, and pasted commands into my server. Here's how that went.
 
-![Before and after: automations went from 421 to 240, scripts from 206 to 98, YAML from about 32,150 lines to about 21,000, and scheduled automation runs from about 389,000 a day to about 5,900](/img/2026/10/ha-numbers.png)
-*The end result, after about 40 commits over two days*
+![Before and after: automations went from 421 to 237, scripts from 206 to 98, YAML from about 32,150 lines to about 21,000, scheduled automation runs from about 389,000 a day to about 5,900, and history rows written from about 1.9 million a day to about 1.1 million](/img/2026/10/ha-numbers-final.png)
+*The end result, after 103 commits over three days*
 
 ## Step Zero: Get It Into Git
 
 Before anything else, the config had to go into Git. My Home Assistant runs in Docker, and the config folder is just a folder on the server. Turning it into a Git repo means every change becomes a commit: I can read it, ask questions about it, and roll it back.
 
-The catch is that a Home Assistant config folder is full of things that should never leave the house: `secrets.yaml`, the `.storage` folder (which has tokens in it), databases, logs and SSH keys. So instead of a normal `.gitignore`, mine ignores *everything* and then opts in only what I want tracked:
+The catch is that a Home Assistant config folder is full of things that should never leave the house: `secrets.yaml`, the `.storage` folder (which has tokens in it), the database, logs, SSH keys, camera snapshots, and whatever else integrations have dropped in there over six years. A normal `.gitignore` lists the things to leave out, which means anything you forgot about goes in. Mine works the other way around: it ignores *everything* and then opts in only the files I actually want tracked. Here it is, trimmed a little:
 
 ```text
-# ignore everything, then opt in what we track
+# ALLOWLIST: ignore everything, then opt in what we track
 /*
+
+# repo files
+!/.gitignore
+!/README.md
+!/REVIEW.md
+!/CLAUDE.md
+!/.github/
+
+# top-level config and scripts
 !/*.yaml
 !/*.py
+
+# folders
 !/packages/
 !/blueprints/
+!/themes/
+!/python_scripts/
 !/scripts/
 !/custom_sentences/
 
-# re-exclude anything sensitive that matches the allows above
+# www: ignore its contents, allow only code
+!/www/
+/www/*
+!/www/dashboard/
+!/www/intercom-card.js
+!/www/icons/
+
+# RE-EXCLUDE anything sensitive that matches the allows above.
+# These must stay below the allows.
 /secrets.yaml
 **/secrets.yaml
+/known_devices.yaml
+/ip_bans.yaml
+*.backup*
+*.bak
 *.db
+*.db-*
 *.log*
+.env
+*.pem
 *.key
 id_rsa*
 ```
+
+A few things worth pointing out:
+
+- **`/*` comes first.** Every file and folder at the top level is ignored until a `!` line lets it back in.
+- **`www/` gets the same treatment one level down.** That folder is where Home Assistant serves files from, so it collects camera snapshots and downloaded images. Only my dashboard code and a couple of icons and cards are tracked.
+- **The re-excludes come last.** `!/*.yaml` would happily let `secrets.yaml` in, so it's ignored again *below* the allow. Order matters in a `.gitignore`: the last matching line wins.
+- **`.storage/`, the database and my ESPHome folder are never mentioned at all**, so they're never tracked.
+- **There's a `secrets.example.yaml`** with every key my config expects and fake values. It's what lets Claude load my config without the real secrets (more on that below).
 
 That way, if some integration drops a new file full of credentials in there next year, Git ignores it by default.
 
@@ -99,7 +135,37 @@ Normally that means clicking around the UI. With 180 automations getting deleted
 
 By default it's a **dry run**. It prints exactly what it would change and changes nothing. Only `--apply` actually does it. Plans are also safe to run twice, so if something failed halfway, I just ran it again.
 
-And for the reverse direction, Claude needed to *see* what was in `.storage` without me handing over secrets. So there's also an export script that copies an allowlist of fields, strips out tokens, passwords, coordinates, emails and MAC addresses, and then removes every value found in `secrets.yaml` as a final pass. I run it on the server and hand Claude the result.
+## Letting Claude See the Running House
+
+The YAML in Git is only half the picture. It says what an automation *should* do, but not what's actually out there: which entities exist, which are unavailable, which automations I'd disabled in the UI years ago, which helpers a dashboard still uses, what's in the error log. Claude had no way into my house, so it needed me to bring the house to it.
+
+That's what a handful of small, **read-only** Python scripts are for. They all run on the server, inside the Home Assistant container, and none of them changes anything.
+
+**`export_for_review.py`** is the big one. It takes a snapshot of the running system and writes it to one compressed file:
+
+- the live state of every entity, through Home Assistant's own API
+- the entity, device, area and category registries
+- every integration, helper, person, zone and voice pipeline
+- every dashboard's full configuration
+- which custom components are installed
+- a summary of the error log: each distinct error or warning, with how often it happened
+
+The important part is what it *leaves out*. It only reads an allowlist of `.storage` files, and only an allowlist of fields from each one. Then it redacts anything that looks like a password, token, email address, MAC address, public IP or GPS coordinate. As a final safety net, it goes through `secrets.yaml` line by line and removes every one of those values from the output, then tells me how many it found. When it's done, it prints a summary like this:
+
+```text
+wrote review-export.json.gz (… KiB uncompressed)
+states: … from rest_api
+entities: …  devices: …  integrations: …  dashboards: …
+secrets.yaml values found and removed from output: …
+```
+
+I run it, hand Claude the file, and Claude can answer questions like "is anything still using `input_boolean.jon_iphone`?" without ever seeing a password. A lot of the cleanup came straight out of these exports: disabled integrations nobody remembered, an old phone that was still reporting 85 entities, helpers that nothing had read in ages, dashboards with buttons that called scripts that didn't exist.
+
+Three smaller scripts filled in the gaps:
+
+- **`ha_check.py`** prints the current state of whatever entities I give it, plus every open repair issue. It has a few extras: `--homekit` lists what each of my HomeKit bridges exposes (so nothing CarPlay or the Home app uses gets deleted), `--z2m` lists every Zigbee device, and `--changes=<entity>` shows how often something changed in the last 24 hours. This was the "did it work?" check after every deploy.
+- **`export_history.py`** exports the recorded history of a few entities, up to the 10 days my database keeps. This is how my master bath shower fan got tuned: Claude replayed 16 real showers from my humidity sensors against different rules and showed me the numbers before building anything.
+- **`recorder_noise.py`** reads the database and lists which entities write the most rows. More on what that found below.
 
 ## First, a Review
 
@@ -135,10 +201,35 @@ It also knew when *not* to merge. One of my kids' bedroom lights and the half ba
 
 The merges, all told:
 
-- Nine "light switch control" automations → **one** "Light switch buttons" automation with a table of switch → lights
-- 22 motion-light automations → **11**, one per room
-- Eight outdoor light automations → **one** schedule
-- Seven attic AC automations that kept fighting each other → **one**
+| Before | After | How it was checked |
+|---|---|---|
+| 9 "light switch control" automations, one per room | **1** "Light switch buttons" | every switch × every button press, identical light calls |
+| 22 motion-light automations | **11**, one per room | random motion and light sequences in every room |
+| 9 circadian and hallway-dimming automations | **3** | old vs new, identical calls |
+| 14 fan and speaker-volume automations | **3** | old vs new, identical calls |
+| 10 kids' automations (a Mira copy and a Simon copy of each) | **5** | old vs new, identical calls |
+| 8 outdoor light automations | **1** schedule | each decision tested step by step |
+| 7 attic AC automations and 5 basement heater automations | **1** each | occupancy, manual changes, a late power reading, a missed IR signal |
+| 3 TV auto-off automations and 2 TV power watchdogs | merged into the new TV setup | |
+| 3 voice weather automations, 2 "where is Mom/Dad" copies | **1** each | identical spoken replies to 18 weather questions and 9 "where is" situations |
+
+A few of these deserve a closer look.
+
+### The light switches
+
+I have ESPHome wall dimmers in most rooms. Each room had its own "light switch control" automation for what the up and down buttons do, and a separate "sync" automation per switch that checked every 5 seconds whether the switch and the bulbs agreed. That's well over a dozen automations, all doing roughly the same thing with slightly different copy-paste.
+
+Now there's one "Light switch buttons" automation. Each switch's button events are a trigger with an ID, and a small table says which lights that switch controls. The syncing moved into the switches themselves (more on that below). Claude simulated all 9 switches with all 4 button commands, old and new, and the light calls matched exactly. That one merge removed about 660 lines.
+
+### The attic AC
+
+This one wasn't a merge so much as a rewrite, because the old automations disagreed with each other. My attic office has a window AC that only understands an IR "power toggle," which I can't tell is on or off except by looking at its smart plug's power draw. Seven automations all poked at it: some changed the thermostat's target on every presence blip, some switched the AC directly behind the thermostat's back. With a button that only toggles, anything that acts without checking can just as easily turn the AC off as on.
+
+Now one automation, "Attic climate," is the only thing that sets the attic's target temperature: 72 when someone's up there, 80 when it's empty. It only acts when that changes, so if I set it to 70 by hand, it stays at 70 until I leave. The actual on/off goes through one script that only sends the IR toggle if the plug says the AC is in the wrong state, waits up to a minute to see it worked, and tries once more if not. The basement heater got the same treatment: five automations became one.
+
+### Voice: Media Controls
+
+The biggest automation I have left is "Voice: Media Controls" at about 1,200 lines and 44 sentence triggers. It handles "pause," "skip," "volume up," "stop the music in the kitchen" and so on, figures out which room you meant, and asks an LLM "did you mean…?" when it can't tell. When we started, there were two copies of it running at once (v7 and v8), plus a separate "Stop All Media" automation that also fired on "stop." It's one automation now. It's big, but it's *one* big thing in one place, instead of three things quietly fighting.
 
 ## Stop Polling Everything
 
@@ -148,7 +239,17 @@ Added up, my Home Assistant was running about **270 scheduled automations per mi
 
 The fix was to react to things changing instead of constantly asking if they changed. For my ESPHome light switches, the "sync" moved into the switch firmware itself: the dimmer just follows its room's light. For the rest, a template trigger fires only when the two sides actually disagree for a few seconds. A template trigger only fires when its result changes, so there's nothing left to poll.
 
-Now it's about 4 runs a minute, and those few are deliberate 1–5 minute safety nets.
+Now it's about 4 runs a minute, and those few are deliberate 1–5 minute safety nets. That's about **66 times fewer** scheduled runs.
+
+## Faster, Too
+
+Cleaner code is nice, but what I actually notice day to day is that the house is quicker and less busy. A few of the speed-ups:
+
+- **The light switches react on their own.** The "sync" between a wall switch and its room's lights used to be a round trip through Home Assistant, backed up by a 5-second poll. Now each ESPHome dimmer follows its room's light in its own firmware (`follow_entity`). Home Assistant doesn't have to do anything at all for the switch to catch up.
+- **Kodi's Back and Home buttons lost a 2-second lag.** The remote waited for Kodi to report which screen it was on before doing anything. It turns out Kodi answers *during* the request, so the wait never saw the answer and every press sat out its full 2-second timeout. In the simulation, a press went from **2.05 seconds to 0.15**.
+- **The database writes about 40% less.** `recorder_noise.py` showed my database was writing about **1.9 million rows a day**. About 420,000 of them were CPU and memory readings for every Docker container, which nothing used. Another 212,000 were my mmWave sensors reporting exactly where in the room each person was standing, constantly. Then camera snapshots, signal-strength readings, and calculated humidity averages. None of it changed what's on a dashboard or what an automation does; Home Assistant just stopped saving history nobody looked at, which means less work for the database on every single change.
+- **The shower fan catches the shower in about a minute.** Using 10 days of humidity history, the new rule caught all 16 recorded showers about a minute in. The old rule had missed one entirely and caught another 7 minutes late.
+- **No more restart storms.** Between the backed-off watchdogs below and nothing being restarted unconditionally at startup, a reboot of Home Assistant no longer kicks off a wave of service restarts.
 
 ## Watchdogs That Back Off
 
@@ -191,11 +292,11 @@ That reads fine in English. But `('partlycloudy' or 'sunny' or 'windy')` isn't a
 
 ### Nest never knew we left
 
-When we both left the house, Home Assistant was supposed to set the Nest thermostat to "away." But the trigger fired when the *first* person left. Another automation, which puts Nest back to "home" when anyone is home, immediately undid it. Then when the second person left, nothing fired at all. So Nest never found out the house was empty. It now waits until nobody is home.
+When we both left the house, Home Assistant was supposed to set the Nest thermostat to "away." But the trigger fired when the *first* person left. Another automation, which puts Nest back to "home" when anyone is home, immediately undid it. Then when the second person left, nothing fired at all. So Nest never found out the house was empty. It now waits until nobody is home, and since the kids can be home without us, "nobody" also means the downstairs cameras haven't seen a person for 30 minutes.
 
 ### The printer protection that couldn't happen
 
-The window AC in my attic office is supposed to pause while my 3D printer heats up, so they don't trip the breaker together. The old automation waited for the printer to draw more than 600 W. It never draws that much, so it never paused anything.
+The window AC in my attic office shares a circuit with my laser printer, so the AC is supposed to pause while the printer heats up, or the two of them trip the breaker. The old automation only paused the AC if the AC was drawing more than 600 W. Its compressor draws 400 to 500. So it never paused anything.
 
 ### One space, one silently dead automation
 
@@ -205,7 +306,7 @@ It turns out `check_config` doesn't fail on an invalid automation. It just logs 
 
 ## Voice Got a Lot Smarter
 
-I have voice satellites in most rooms: Home Assistant Voice PE units, a couple of Linux boxes, and the kids' tablets. Voice had the messiest problems of all, because of one thing I didn't know:
+I have voice satellites in most rooms: Home Assistant Voice PE units and a couple of Linux boxes. Voice had the messiest problems of all, because of one thing I didn't know:
 
 **When you say something, every automation with a matching sentence fires.** And they all run *before* Home Assistant's built-in commands, so they block those too.
 
@@ -243,6 +344,36 @@ So they went back. Now `automations.yaml` and `scripts.yaml` stay UI-editable, o
 
 Claude also rewrote both files using **Home Assistant's own YAML writer**, converted to the current syntax (`triggers:`, `actions:`), and checked that every automation came out identical. That sounds boring, but it matters: when I save an automation in the UI now, Git shows only the lines I actually changed, instead of Home Assistant reformatting the entire file.
 
+## By the Numbers
+
+Since every change is a commit, Git keeps score. The first commit, my config exactly as it was, went in on a Saturday at 2 pm. The last one in this round landed Monday at 4 pm. In between: **103 commits in about 50 hours** (13 on Saturday, 36 on Sunday, 54 on Monday).
+
+Across those commits, about **46,400 lines were added and 54,000 removed**. That overstates it a little, because one commit rewrote both `automations.yaml` and `scripts.yaml` in the current syntax, which touches nearly every line. Comparing just the first and last versions, 96 files changed: **22,111 lines in, 29,707 lines out**. (That doesn't count the wall-tablet dashboards, which have [their own post](/rewriting-my-home-assistant-dashboards-in-plain-html).)
+
+| | Start | Now |
+|---|---|---|
+| Automations | 421 | **237** |
+| Scripts | 206 | **98** |
+| Lines of YAML (config and packages) | ~32,150 | **~21,000** |
+| `automations.yaml` | 19,197 lines | **12,165** |
+| `scripts.yaml` | 4,892 lines | **2,507** |
+| Feature packages | 2 | **18** |
+| Entities | TODO | **TODO** |
+| Devices | TODO | **TODO** |
+| Integrations | TODO | **TODO** |
+| Scheduled automation runs | ~389,000 a day | **~5,900** |
+| Automations polling every few seconds | 20 (one every second) | **0** |
+| History rows written | ~1.9 million a day | **~1.1 million** |
+
+And what went away along the way:
+
+- **28 integrations and config entries**: disabled leftovers (MyQ, VeSync, AdGuard, Glances, three remote Home Assistant links), two Samsung TV integrations, Waze (it had stopped working; travel times now come from my own routing server), Node-RED, an extra ChatGPT conversation agent, two old phones, and a HomeKit bridge with nothing left in it.
+- **More than 600 orphaned entity registry entries**, the ghosts automations and integrations leave behind when they're deleted. The old Pixel alone had 85.
+- **About 100 helpers and timers** that nothing read anymore, including the 48 from my old homemade timer system.
+- **5 dashboards** nobody used, including a "Test ground" whose buttons called a script that never existed.
+
+What got *added* is mostly tooling: 38 plans, a validator, a side-by-side comparison script, the voice routing checker and the read-only export scripts: about 1,800 lines of new Python in all. That's the part I expect to keep using.
+
 ## So, How Was Working With Claude?
 
 Honestly? Great, with some caveats.
@@ -263,7 +394,7 @@ It also made mistakes: the indentation bug above, the packages detour, and one p
 
 ## What's Left
 
-There's still a short list in `REVIEW.md`: a couple of remaining once-a-minute checks, shrinking the database by excluding noisy sensors, and the basement, which is still being set back up after the flood. But the hard part is done. The config is in Git, every automation passes the validator, and the next time I want to change something, I don't have to be afraid of it.
+There's still a short list in `REVIEW.md`: a week of reading the log for warnings, a camera server that keeps dropping its streams, and the basement, which is still being set back up after the flood. (The last once-a-minute checks and the noisy database, which were on this list when I started writing, are done.) But the hard part is done. The config is in Git, every automation passes the validator, and the next time I want to change something, I don't have to be afraid of it.
 
 The wall tablets got the same treatment, and I wrote that one up separately: [Rewriting My Home Assistant Dashboards in Plain HTML](/rewriting-my-home-assistant-dashboards-in-plain-html).
 
