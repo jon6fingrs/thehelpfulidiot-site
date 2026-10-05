@@ -150,14 +150,16 @@ That's what a handful of small, **read-only** Python scripts are for. They all r
 - which custom components are installed
 - a summary of the error log: each distinct error or warning, with how often it happened
 
-The important part is what it *leaves out*. It only reads an allowlist of `.storage` files, and only an allowlist of fields from each one. Then it redacts anything that looks like a password, token, email address, MAC address, public IP or GPS coordinate. As a final safety net, it goes through `secrets.yaml` line by line and removes every one of those values from the output, then tells me how many it found. When it's done, it prints a summary like this:
+The important part is what it *leaves out*. It only reads an allowlist of `.storage` files, and only an allowlist of fields from each one. Then it redacts anything that looks like a password, token, email address, MAC address, public IP or GPS coordinate. As a final safety net, it goes through `secrets.yaml` line by line and removes every one of those values from the output, then tells me how many it found. Here's what it printed the last time I ran it:
 
 ```text
-wrote review-export.json.gz (… KiB uncompressed)
-states: … from rest_api
-entities: …  devices: …  integrations: …  dashboards: …
-secrets.yaml values found and removed from output: …
+wrote review-export.json.gz (14775 KiB uncompressed)
+states: 2214 from core.restore_state
+entities: 7812  devices: 793  integrations: 256  dashboards: 35
+secrets.yaml values found and removed from output: 0
 ```
+
+That last zero is the one I like to see: the earlier redaction steps had already caught everything, so the safety net had nothing left to remove.
 
 I run it, hand Claude the file, and Claude can answer questions like "is anything still using `input_boolean.jon_iphone`?" without ever seeing a password. A lot of the cleanup came straight out of these exports: disabled integrations nobody remembered, an old phone that was still reporting 85 entities, helpers that nothing had read in ages, dashboards with buttons that called scripts that didn't exist.
 
@@ -358,14 +360,11 @@ Across those commits, about **46,400 lines were added and 54,000 removed**. That
 | `automations.yaml` | 19,197 lines | **12,165** |
 | `scripts.yaml` | 4,892 lines | **2,507** |
 | Feature packages | 2 | **18** |
-| Entities | TODO | **TODO** |
-| Devices | TODO | **TODO** |
-| Integrations | TODO | **TODO** |
 | Scheduled automation runs | ~389,000 a day | **~5,900** |
 | Automations polling every few seconds | 20 (one every second) | **0** |
 | History rows written | ~1.9 million a day | **~1.1 million** |
 
-And what went away along the way:
+Even after all of this, the house is big: today Home Assistant knows about **7,812 entities on 793 devices**, across **256 integrations and helpers**. Here's what went away along the way:
 
 - **28 integrations and config entries**: disabled leftovers (MyQ, VeSync, AdGuard, Glances, three remote Home Assistant links), two Samsung TV integrations, Waze (it had stopped working; travel times now come from my own routing server), Node-RED, an extra ChatGPT conversation agent, two old phones, and a HomeKit bridge with nothing left in it.
 - **More than 600 orphaned entity registry entries**, the ghosts automations and integrations leave behind when they're deleted. The old Pixel alone had 85.
