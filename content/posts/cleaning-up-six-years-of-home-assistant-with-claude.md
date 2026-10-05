@@ -1,7 +1,6 @@
 +++
 title = "Cleaning Up Six Years of Home Assistant with Claude"
-date = 2026-10-04
-draft = true
+date = 2026-10-05
 path = "cleaning-up-six-years-of-home-assistant-with-claude"
 description = "How I took a Home Assistant install with 421 automations, a few security holes and a lot of polling, put it in Git, and cleaned it up with Claude Code without breaking anything my family relies on."
 
