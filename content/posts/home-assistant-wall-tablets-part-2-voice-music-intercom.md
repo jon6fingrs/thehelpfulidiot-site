@@ -35,7 +35,9 @@ It turns any browser into a real Home Assistant voice satellite. Each tablet you
 - **A media player.** Text-to-speech answers, and anything else you send it, play on the tablet.
 - **Skins.** Ten looks for the on-screen overlay (Default, Alexa, Google Home, Siri, Waveform and more). The screenshot below is the Default one.
 
-If you use regular Lovelace dashboards, that's the whole setup: install it, add a device per tablet, pick that device in the Voice Satellite sidebar panel on the tablet, and you're done. On Android, the author also has a free companion kiosk app, [Kiosk Satellite](https://kiosksatellite.com), that can keep listening with the screen off. I actually started with Kiosk Satellite, but on my older tablets, together with Lovelace, it was just too slow. My tablets run [Fully Kiosk Browser](https://www.fully-kiosk.com/) showing my plain HTML pages, which Voice Satellite also supports.
+If you use regular Lovelace dashboards, that's the whole setup: install it, add a device per tablet, pick that device in the Voice Satellite sidebar panel on the tablet, and you're done. On Android, the author also has a free companion kiosk app, [Kiosk Satellite](https://kiosksatellite.com), that can keep listening with the screen off.
+
+I first used Voice Satellite exactly that way: a Lovelace dashboard in [Fully Kiosk Browser](https://www.fully-kiosk.com/), the app that runs all my wall tablets. On my older tablets, Lovelace plus the voice assistant was just too slow. Kiosk Satellite might have been another way to go, but I already had faster pages.
 
 The catch for me is that Voice Satellite expects to run inside Home Assistant's own frontend, and my pages *aren't* Home Assistant's frontend. That was the whole point of part 1.
 
