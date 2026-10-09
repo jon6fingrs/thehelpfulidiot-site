@@ -24,7 +24,20 @@ Here's a kid's room now. The only visible change is the new **Music** button in 
 
 Most rooms in my house already have a voice satellite: Home Assistant Voice PE boxes, and a Linux box in the attic. The kids' rooms didn't, and the family room had a Linux Voice Assistant running in a container that was never very reliable. But each of those rooms has a tablet on the wall, with a microphone and a speaker, that is on all day anyway.
 
-There's a great integration for exactly this, [Voice Satellite](https://github.com/jxlarrea/voice-satellite-card-integration). It turns a browser into a Home Assistant voice satellite: wake word, Assist, timers, announcements, all of it. The catch is that it expects to run inside Home Assistant's own frontend, and my pages *aren't* Home Assistant's frontend. That was the whole point of part 1.
+### The Integration: Voice Satellite
+
+All the voice work on these tablets is done by [**Voice Satellite**](https://github.com/jxlarrea/voice-satellite-card-integration), a custom integration by [jxlarrea](https://github.com/jxlarrea). It's in the default [HACS](https://hacs.xyz/) list (search for "Voice Satellite"), and I'm running version 2026.9.13. It needs Home Assistant 2025.6.1 or newer and an [Assist pipeline](https://www.home-assistant.io/voice_control/voice_remote_local_assistant/) with speech-to-text, a conversation agent and text-to-speech, the same as any other voice satellite.
+
+It turns any browser into a real Home Assistant voice satellite. Each tablet you add (Settings > Devices & services > Add Integration > Voice Satellite) becomes an `assist_satellite` device, just like a Voice PE box, with its own media player and settings entities. From there you get:
+
+- **Wake word detection in the browser.** It runs on the tablet itself, so audio only goes to Home Assistant after the wake word is heard. There are three engines to choose from, including microWakeWord, the same engine the Voice PE uses.
+- **Timers and announcements.** "Set a 10 minute timer" shows a countdown on screen, and automations can use `assist_satellite.announce` and `start_conversation` on a tablet like on any other satellite.
+- **A media player.** Text-to-speech answers, and anything else you send it, play on the tablet.
+- **Skins.** Ten looks for the on-screen overlay (Default, Alexa, Google Home, Siri, Waveform and more). The screenshot below is the Default one.
+
+If you use regular Lovelace dashboards, that's the whole setup: install it, add a device per tablet, pick that device in the Voice Satellite sidebar panel on the tablet, and you're done. On Android, the author also has a free companion kiosk app, [Kiosk Satellite](https://kiosksatellite.com), that can keep listening with the screen off. I haven't tried it; my tablets stay on my plain HTML pages in their kiosk browser.
+
+The catch for me is that Voice Satellite expects to run inside Home Assistant's own frontend, and my pages *aren't* Home Assistant's frontend. That was the whole point of part 1.
 
 So Claude did something I wouldn't have thought of. The page loads the integration's own script from Home Assistant, completely unchanged, and gives it what it's looking for: a stand-in `<home-assistant>` element with a `hass` object on it, built on top of the page's existing websocket. The integration has no idea it isn't running in Home Assistant.
 
