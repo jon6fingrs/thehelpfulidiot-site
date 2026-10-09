@@ -28,6 +28,11 @@ There's a great integration for exactly this, [Voice Satellite](https://github.c
 
 So Claude did something I wouldn't have thought of. The page loads the integration's own script from Home Assistant, completely unchanged, and gives it what it's looking for: a stand-in `<home-assistant>` element with a `hass` object on it, built on top of the page's existing websocket. The integration has no idea it isn't running in Home Assistant.
 
+Here's what it looks like when someone talks to it. The dashboard blurs out behind the conversation, and the colored bar at the bottom moves while the tablet listens and answers:
+
+![A kid's tablet with the voice assistant active: the dashboard blurred in the background, the request "Turn off the light strip" in grey, the answer "Turned off the light" in white below it, and a colored bar along the bottom](/img/2026/10/dash2-voice-active.jpg)
+*The Voice Satellite integration's default look, over a kid's room page. The tablet's microphone hears the wake word; the rest happens in Home Assistant.*
+
 ![How voice works: voice-satellite.js builds a stand-in home-assistant element on the page's own websocket, the Voice Satellite integration's script runs on it unchanged and streams the microphone, Home Assistant's Assist pipeline handles the request, and the answer or the music comes back to the tablet](/img/2026/10/dash2-voice.png)
 *The integration's script doesn't change at all. It just finds what it expects on the page.*
 
@@ -157,7 +162,7 @@ A few details make it pleasant to use:
 
 The fake Home Assistant from part 1 got a bit bigger for this post. It now fakes Music Assistant too: a library, search results, an artist's albums and songs. Every band, album and playlist is made up, and the covers are random shapes. The kid's room is just "Kid's Room."
 
-The voice assistant is the one thing I couldn't screenshot that way. Its on-screen display is the integration's own, and it needs a real microphone and a real Assist pipeline to show anything, so it got a diagram instead.
+The voice assistant was the hard one. Its on-screen display belongs to the integration, and a real one needs a microphone and a real Assist pipeline. So the screenshot above is the integration's own stylesheet and layout, drawn over the fake kid's room with a made-up request and Home Assistant's usual answer, rather than a recording of a live conversation. How it works got a diagram.
 
 ## How It Went
 
