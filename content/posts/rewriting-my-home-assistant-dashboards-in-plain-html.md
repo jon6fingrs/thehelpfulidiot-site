@@ -9,6 +9,8 @@ category = ["Smart Home"]
 tag = ["home assistant", "claude", "dashboard"]
 +++
 
+*Update: [Part 2](/home-assistant-wall-tablets-part-2-voice-music-intercom) adds voice, a music page, a smarter intercom and tablets that update themselves.*
+
 There are tablets on the walls all over my house. A Fire HD 10 in the family room, another one in the basement, a Lenovo StarView next to the TV that works as a remote, and one in each of the kids' rooms. (I've [3D printed mounts for these before](/custom-3d-printed-mount-for-fire-tablet-2015).) They are how most of my family actually uses Home Assistant.
 
 For years they all ran regular Home Assistant dashboards (Lovelace) in a kiosk browser. And on these tablets, Lovelace was *heavy*. Every one of them was loading the entire Home Assistant app just to show a few buttons. Taps would hang for a while before anything happened, and the pages kept reloading on their own, usually right when someone was trying to turn off a light.
