@@ -1,6 +1,6 @@
 +++
 title = "My Home Assistant Wall Tablets, Part 2: Voice, Music and a Smarter Intercom"
-date = 2026-10-09
+date = 2026-10-10
 path = "home-assistant-wall-tablets-part-2-voice-music-intercom"
 description = "The plain HTML wall tablets from part 1 learned to listen: the kids' tablets and the family room remote are now voice assistants, have a Music Assistant page, bring up the right page on their own, and update themselves after a change."
 
