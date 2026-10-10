@@ -95,6 +95,17 @@ purpose to outrank its SCSS specificity; keep that when editing.
   `nginx`, `php`, `json`, `text` for console output).
 - Images: `![alt text](/path)` with real alt text; an optional caption is an
   italic line directly underneath (`*Caption*`), styled by `custom.css`.
+- **Series.** Whenever a new post continues or follows up an existing one (a
+  "Part 2", an update, the next step of the same project), put them in a series
+  instead of linking them by hand: a folder under `content/series/<slug>/`
+  with an `_index.md` copied from `content/series/email-backup/_index.md`
+  (new `title` and `description`), and `git mv` the posts into it. URLs don't
+  change because every post sets `path`, and the series adds "Part N of M" and
+  next/previous links by itself, so don't add manual "Part 2" or "Update" links
+  between them. Posts that merely share a topic or tag (two unrelated Home
+  Assistant projects) are not a series. When a draft looks like it belongs with
+  an older post, say so and ask before turning it into a series. Done for the
+  wall tablet dashboard posts (`content/series/wall-tablet-dashboards/`).
 - `updated =` only for real revisions. Many posts carry a bulk 2024-04 date
   from WordPress; listings show only `date` for that reason.
 
