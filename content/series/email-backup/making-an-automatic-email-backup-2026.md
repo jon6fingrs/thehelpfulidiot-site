@@ -37,7 +37,7 @@ It turns out Dovecot now has a search index built in, called [flatcurve](https:/
 
 I didn't want to swap it in on faith, so Claude generated a test archive of 50,000 emails (made from public-domain books, with a few words planted on purpose) and ran the same searches against both.
 
-![Search on a 50,000-message test archive. Searching for "invo" finds "invoice": 0 hits with Solr, 513 with flatcurve. Accents, word variants like swimming and swims, and text inside attachments work with both. Typo search with IMAP FUZZY works only with Solr, but iPhone Mail never asks for it. Searching all folders takes about 0.3 seconds with either. Solr needs its own Java container; flatcurve needs none. Index size: 14 MB for Solr, 66 MB for flatcurve, and 192 MB for flatcurve with mid-word matching, against 199 MB of mail.](/img/2026/10/mail-search.png)
+![Search on a 50,000-message test archive. Searching for "invo" finds "invoice": 0 hits with Solr, 513 with flatcurve. Accents, word variants like swimming and swims, and text inside attachments work with both. Searching all folders takes about 0.3 seconds with either. Solr needs its own Java container; flatcurve needs none. Index size: 14 MB for Solr, 66 MB for flatcurve, and 192 MB for flatcurve with mid-word matching, against 199 MB of mail. A note says Solr can also do typo-tolerant search, but only when a mail app asks for it specially; Dovecot doesn't advertise it and common mail apps never ask, so in practice it goes unused.](/img/2026/10/mail-search.png)
 *Same searches, same test archive*
 
 The first row is the one that sold me. As you type, the iPhone's Mail app only searches the mail that's already on the phone. When that doesn't turn up what I want, I hit Search and it asks the server to search the whole archive, sending whatever is in the box at that moment. Solr only matches whole words, so a partial word like "invo", or the first half of someone's name, came back empty. Flatcurve matches the start of words, so the server now finds "invoice" from "invo", much like the phone's own search does.
@@ -45,9 +45,9 @@ The first row is the one that sold me. As you type, the iPhone's Mail app only s
 ![A mock-up of iPhone Mail after searching the All folder on the server for "invo", showing five invoices from different folders and years, each with "invo" highlighted](/img/2026/10/mail-phone-search.png)
 *A mock-up with made-up mail (not my inbox), but this is the idea: a partial word sent to the server now finds things*
 
-There are two trade-offs:
+Two things to know:
 
-- **Typo-tolerant ("fuzzy") search is gone.** Solr supported it and flatcurve doesn't. But a mail app has to ask for it specially, and iPhone Mail never does, so on my phone nothing changes.
+- **Typo-tolerant ("fuzzy") search isn't available.** Solr can do it and flatcurve can't, but only when a mail app asks for it specially. Dovecot doesn't advertise it, and the common mail apps, iPhone Mail included, don't ask, so in practice nothing changes.
 - **The index is bigger**, roughly a third the size of the mail itself instead of a few percent. Matching from the middle of words is also possible (so "voice" would find "invoice"), but it tripled the index again, so it's off by default.
 
 ## All Mail and Flagged, For Real This Time
