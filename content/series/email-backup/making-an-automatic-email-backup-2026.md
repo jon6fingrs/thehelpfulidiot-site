@@ -108,9 +108,29 @@ nano .env                  # fill in your settings
 docker compose up -d
 ```
 
+If you run your stacks through Portainer like I do, the settings go in the stack's **Environment variables** section instead of a `.env` file, and the compose file doesn't need any changes.
+
 The [migration guide](https://github.com/jon6fingrs/mailstack/blob/main/MIGRATING.md) has a table mapping every old setting to its new name, and how to go back if you need to. The search index gets built once in the background after the switch. It took the test archive under a minute, and a big archive with lots of attachments can take an hour or more. Mail works normally in the meantime.
 
 The old `thehelpfulidiot/dovecot`, `mbsync` and `solr` images stay on Docker Hub so nothing breaks for anyone using them, but they won't be updated.
+
+## How My Switch Went
+
+I switched my own server over the morning I finished this post. It's working, but not before I tripped over my own feet a couple of times.
+
+- **Nothing re-downloaded.** mbsync's first run went through all 42 of my folders and came back with `Near: +0`, meaning there was nothing new to copy. It picked up exactly where the old container left off, and a few minutes later it pulled down one new email, which is the whole job.
+- **I filled in the settings wrong.** I had loaded the example values into Portainer and only edited some of them, so Dovecot started up with the placeholder username "me", and somehow my real username had ended up in the password field. Living up to the name of this blog.
+- **Two small papercuts got fixed along the way.** My old setup took the certificate as just `cert.pem`. The new one wanted `/ssl/cert.pem` and refused to start without it; it now accepts either. And when mbsync couldn't write to my mail folder (my files still belong to the user ID from my old Synology days), its error message only said that. Now it tells you exactly which `PUID` and `PGID` to set.
+- **My iPhone said the server wasn't responding.** This was the interesting one. The logs showed the phone logging in fine, turning on IMAP compression, and hanging up a few milliseconds later:
+
+  ```text
+  imap-login: Info: Logged in: user=<…>, method=PLAIN, TLS
+  imap: Info: Disconnected: Connection closed (COMPRESS finished 0.004 secs ago)
+  ```
+
+  My old Dovecot never offered compression; the new one does by default. Switching it off fixed my phone immediately. It's now off in the images, with a test so it can't sneak back in. On a home network or a VPN, compression barely saves anything anyway.
+- **mbsync prints `Maildir warning: ignoring INBOX in /mail/` on every run.** That's harmless. It's about how my INBOX folder sits inside the mail folder, INBOX still syncs, and the old container printed it too, just where I never looked.
+- **The search index builds in the background.** About 430 MB so far after the first big folder, and still going as I write this. Mail worked normally the whole time.
 
 ## Closing
 
