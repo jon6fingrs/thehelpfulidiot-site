@@ -9,13 +9,15 @@ category = ["Smart Home"]
 tag = ["home assistant", "tuya", "claude"]
 +++
 
-Back in 2022 I wrote about [getting my XMCOSY+ string lights working locally](/integrating-xmcosy-outdoor-string-lights-with-home-assistant-locally) with LocalTuya. It worked, but it took a lot of pieces: a LocalTuya light, five sensors, a template light, three scripts, an automation, two dropdown helpers, two more template sensors, a REST command, and a Node-RED flow whose only job was to turn a hue and saturation into a hex color.
+Back in 2022 I wrote about [getting my XMCOSY+ string lights working locally](/integrating-xmcosy-outdoor-string-lights-with-home-assistant-locally) with LocalTuya. It worked, but it took a lot of pieces: a LocalTuya light, five sensors, a template light, three scripts, an automation, two dropdown helpers, two more template sensors, a REST command, and a Node-RED flow whose only job was to convert between the different ways of measuring brightness and color.
 
-The lights are still going (they hang in my basement these days), and everything still runs locally. But a lot has changed around them. While I was [cleaning up my Home Assistant config with Claude](/cleaning-up-six-years-of-home-assistant-with-claude) this month, the string lights got a turn too. And since the 2022 post was more of a story than something you could copy, this post is two things: what changed, and a single package file you can drop into your own Home Assistant.
+Despite how hacky it is to integrate these lights, they have been rock solid for me over the past several years. They hang in my basement these days, and everything still runs locally.
+
+But my own setup slowly drifted over those years: a fix here, a workaround after a Home Assistant update there, and none of it made it back to the blog. While I was [cleaning up my Home Assistant config with Claude](/cleaning-up-six-years-of-home-assistant-with-claude) this month, the string lights got a turn too, and I wanted to make sure those improvements were available to everyone, not just my basement. So this post is two things: what changed, and a single package file you can drop into your own Home Assistant.
 
 ## What Changed Since 2022
 
-**Node-RED is gone.** In color mode, the brightness lives inside data point 24, next to the color, and I used Node-RED to rebuild that whole string every time the brightness changed. It turns out LocalTuya already knows how to build DP 24 itself. If you hand its light the *current* color along with the new brightness, it writes the string for you. So the Node-RED flow, the REST command and `sensor.color_output` all went away.
+**Node-RED is gone.** In color mode, the brightness lives inside data point 24, next to the color, and the lights, Home Assistant and I all measured brightness and hue on different scales. Back then I needed Node-RED to convert between them. Home Assistant has since gained the ability to do that conversion itself, so now I just hand the LocalTuya light the *current* color along with the new brightness, and the DP 24 string gets built for me. The Node-RED flow, the REST command and `sensor.color_output` all went away.
 
 **Home Assistant only speaks kelvin now.** Home Assistant 2026.3 removed the old mired-based color temperature from lights. LocalTuya 5.2.3, the version I run, still works in mireds, so [white temperature stopped working on every LocalTuya light](https://github.com/rospogrigio/localtuya/issues/2182). The fix here is to skip LocalTuya for that one setting and write the white temperature data point (23) directly.
 
@@ -394,7 +396,7 @@ template:
 
 ## How It Works
 
-**Brightness.** The lights have two brightness settings: DP 22 for white, and the end of DP 24 for color. Effects always run at full brightness. So `script.xmcosy_brightness` looks at the mode: in white it writes DP 22; in color it reads the current hue and saturation out of DP 24 and hands them to the LocalTuya light *together with* the new brightness, so LocalTuya builds DP 24 itself. That's the trick that replaced Node-RED. If an effect is running, dimming switches the lights back to white first, since an effect can't be dimmed.
+**Brightness.** The lights have two brightness settings: DP 22 for white, and the end of DP 24 for color. Effects always run at full brightness. So `script.xmcosy_brightness` looks at the mode: in white it writes DP 22; in color it reads the current hue and saturation out of DP 24 and hands them to the LocalTuya light *together with* the new brightness, and the conversion to DP 24 happens without any help. That's what replaced Node-RED. If an effect is running, dimming switches the lights back to white first, since an effect can't be dimmed.
 
 **White temperature.** Home Assistant sends kelvin, and the lights want 0-255 on DP 23. `script.xmcosy_white` converts kelvin to mireds, clamps it to 153-370 (6500-2700 K) and scales it the same way LocalTuya does, so 2700 K is 0 and 6500 K is 255. The light's `temperature` template does the same math backwards to report it.
 
