@@ -37,18 +37,29 @@ It turns out Dovecot now has a search index built in, called [flatcurve](https:/
 
 I didn't want to swap it in on faith, so Claude generated a test archive of 50,000 emails (made from public-domain books, with a few words planted on purpose) and ran the same searches against both.
 
-![Search on a 50,000-message test archive. Searching for "invo" finds "invoice": 0 hits with Solr, 513 with flatcurve. Accents, word variants like swimming and swims, and text inside attachments work with both. Searching all folders takes about 0.3 seconds with either. Solr needs its own Java container; flatcurve needs none. Index size: 14 MB for Solr, 66 MB for flatcurve, and 192 MB for flatcurve with mid-word matching, against 199 MB of mail. A note says Solr can also do typo-tolerant search, but only when a mail app asks for it specially; Dovecot doesn't advertise it and common mail apps never ask, so in practice it goes unused.](/img/2026/10/mail-search.png)
-*Same searches, same test archive*
+![Search on a 50,000-message test archive. Searching for "invo" finds "invoice": 0 hits with Solr, 513 with flatcurve. Accents, word variants like swimming and swims, and text inside attachments work with both. Searching all folders takes about 0.3 seconds with either. Solr builds the index faster, 18 seconds against 45. Solr was using about 350 MB of memory on my server; flatcurve needs none extra. Solr is an extra service to run and update, with Java, schema files, cron jobs and a port to lock down; flatcurve is none. Index size: 14 MB for Solr, 66 MB for flatcurve, and 192 MB for flatcurve with mid-word matching, against 199 MB of mail. A note says Solr can also do typo-tolerant search, but only when a mail app asks for it specially; Dovecot doesn't advertise it and common mail apps never ask, so in practice it goes unused.](/img/2026/10/mail-search.png)
+*Same searches, same test archive. Green marks the winner of each row*
 
-The first row is the one that sold me. As you type, the iPhone's Mail app only searches the mail that's already on the phone. When that doesn't turn up what I want, I hit Search and it asks the server to search the whole archive, sending whatever is in the box at that moment. Solr only matches whole words, so a partial word like "invo", or the first half of someone's name, came back empty. Flatcurve matches the start of words, so the server now finds "invoice" from "invo", much like the phone's own search does.
+The first row is the one I care about most. As you type, the iPhone's Mail app only searches the mail that's already on the phone. When that doesn't turn up what I want, I hit Search and it asks the server to search the whole archive, sending whatever is in the box at that moment. Solr only matches whole words, so a partial word like "invo", or the first half of someone's name, came back empty. Flatcurve matches the start of words, so the server now finds "invoice" from "invo", much like the phone's own search does.
 
 ![A mock-up of iPhone Mail after searching the All folder on the server for "invo", showing five invoices from different folders and years, each with "invo" highlighted](/img/2026/10/mail-phone-search.png)
 *A mock-up with made-up mail (not my inbox), but this is the idea: a partial word sent to the server now finds things*
 
-Two things to know:
+### Why flatcurve anyway
+
+Solr isn't bad at this. Its index is a fraction of the size, it builds that index faster, and searches were just as quick with either one. So why switch?
+
+- **One less thing to run.** Solr is a whole Java application with its own schema files, its own cron jobs to commit and optimize the index, its own upgrades, and its own port, which, as I found out, I had left open to my network. Flatcurve is part of Dovecot. For a self-hoster, every service you don't run is one you never have to fix.
+- **Memory.** Solr was using about 350 MB on my server just sitting there. Flatcurve needs nothing extra.
+- **Less disk churn.** That same Solr container had written 12 GB to disk in about three weeks, I suspect mostly from the nightly optimize rewriting the whole index.
+- **Partial words**, as above.
+
+The price is disk space. My Solr index is 2.75 GB, and going by the test I expect flatcurve's to land somewhere around 13 GB, so roughly 10 GB more once Solr is gone. On a server with room to spare, that's an easy trade for less complexity, less memory and better partial matches. If your disk is tight, Solr is still a perfectly good choice.
+
+Two smaller notes:
 
 - **Typo-tolerant ("fuzzy") search isn't available.** Solr can do it and flatcurve can't, but only when a mail app asks for it specially. Dovecot doesn't advertise it, and the common mail apps, iPhone Mail included, don't ask, so in practice nothing changes.
-- **The index is bigger**, roughly a third the size of the mail itself instead of a few percent. Matching from the middle of words is also possible (so "voice" would find "invoice"), but it tripled the index again, so it's off by default.
+- **Matching from the middle of words** (so "voice" would find "invoice") is also possible, but it tripled the index again, so it's off by default.
 
 ## All Mail and Flagged, For Real This Time
 
