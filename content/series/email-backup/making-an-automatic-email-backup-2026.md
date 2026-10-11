@@ -15,12 +15,12 @@ In 2024 I added Solr so that searching from my phone didn't take forever. Since 
 
 So, like I did with [my Home Assistant setup](/cleaning-up-six-years-of-home-assistant-with-claude), I sat down with Claude and cleaned it up. I pulled the config files out of the running containers, Claude compared them with the repos and my old posts, and we rebuilt the whole thing as one repo: [mailstack](https://github.com/jon6fingrs/mailstack). Claude did the reading, writing and testing. I answered questions and made the decisions.
 
-![Before: four repos and four containers. The Dovecot repo said 2.3 while the server ran a 2.4 image I had built myself, it ran chown on every start, debug logging was on, and certificate renewals needed a manual restart. mbsync used cron and sudo and had the password written into its config. Solr used up to 4 GB of memory, ran nightly cron jobs and had port 8983 open on the LAN with no password. Tika was whatever latest was. After: one repo and three containers. Dovecot 2.4.5 with built-in search that matches partial words, All Mail and Flagged folders, automatic certificate reloads and read-only certificates. mbsync 1.5.1 runs a simple loop as my own user and never writes the password to disk. Tika 4.1 runs on a private network. Versions are pinned, a 23-check test runs on every change, and images are built for amd64 and arm64.](/img/2026/10/mail-before-after.png)
+![Before: four repos and four containers. The Dovecot repo said 2.3 while the server ran a 2.4 image I had built myself, it ran chown on every start, debug logging was on, and certificate renewals needed a manual restart. mbsync used cron and sudo and had the password written into its config. Solr used up to 4 GB of memory, ran nightly cron jobs and had port 8983 open on the LAN with no password. Tika had no version pinned, so it was whatever was newest when I last pulled it (2.9.0). After: one repo and three containers. Dovecot 2.4.5 with built-in search that matches partial words, All Mail and Flagged folders, automatic certificate reloads and read-only certificates. mbsync 1.5.1 runs a simple loop as my own user and never writes the password to disk. Tika 4.1 runs on a private network. Versions are pinned, a 23-check test runs on every change, and images are built for amd64 and arm64.](/img/2026/10/mail-before-after.png)
 *Then and now*
 
 ## What We Found
 
-Some of this was embarrassing, but I promised myself I would be honest on this blog.
+In retrospect, my amateur attempt at building this was successful, but it wasn't as clean as I had thought.
 
 - **The repos didn't match my server.** GitHub still had the 2024 version, built on Dovecot 2.3. My server was running a Dovecot 2.4 image I had built myself at some point and tagged `2.4.1-beta-3`, which wasn't in any repo.
 - **My "All Mail" and "Flagged" folders never existed.** The config labelled them, but the folders they pointed at were never created. I just never noticed.
