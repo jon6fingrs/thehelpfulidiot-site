@@ -15,7 +15,7 @@ In 2024 I added Solr so that searching from my phone didn't take forever. Since 
 
 So, like I did with [my Home Assistant setup](/cleaning-up-six-years-of-home-assistant-with-claude), I sat down with Claude and cleaned it up. I pulled the config files out of the running containers, Claude compared them with the repos and my old posts, and we rebuilt the whole thing as one repo: [mailstack](https://github.com/jon6fingrs/mailstack). Claude did the reading, writing and testing. I answered questions and made the decisions.
 
-![Before: four repos and four containers. The Dovecot repo said 2.3 while the server ran a 2.4 image I had built myself, it ran chown on every start, debug logging was on, and certificate renewals needed a manual restart. mbsync used cron and sudo and had the password written into its config. Solr used up to 4 GB of memory, ran nightly cron jobs and had port 8983 open on the LAN with no password. Tika was whatever latest was. After: one repo and three containers. Dovecot 2.4.5 with built-in search, search-as-you-type, All Mail and Flagged folders, automatic certificate reloads and read-only certificates. mbsync 1.5.1 runs a simple loop as my own user and never writes the password to disk. Tika 4.1 runs on a private network. Versions are pinned, a 23-check test runs on every change, and images are built for amd64 and arm64.](/img/2026/10/mail-before-after.png)
+![Before: four repos and four containers. The Dovecot repo said 2.3 while the server ran a 2.4 image I had built myself, it ran chown on every start, debug logging was on, and certificate renewals needed a manual restart. mbsync used cron and sudo and had the password written into its config. Solr used up to 4 GB of memory, ran nightly cron jobs and had port 8983 open on the LAN with no password. Tika was whatever latest was. After: one repo and three containers. Dovecot 2.4.5 with built-in search that matches partial words, All Mail and Flagged folders, automatic certificate reloads and read-only certificates. mbsync 1.5.1 runs a simple loop as my own user and never writes the password to disk. Tika 4.1 runs on a private network. Versions are pinned, a 23-check test runs on every change, and images are built for amd64 and arm64.](/img/2026/10/mail-before-after.png)
 *Then and now*
 
 ## What We Found
@@ -37,13 +37,13 @@ It turns out Dovecot now has a search index built in, called [flatcurve](https:/
 
 I didn't want to swap it in on faith, so Claude generated a test archive of 50,000 emails (made from public-domain books, with a few words planted on purpose) and ran the same searches against both.
 
-![Search on a 50,000-message test archive. Typing "invo" finds "invoice": 0 hits with Solr, 513 with flatcurve. Accents, word variants like swimming and swims, and text inside attachments work with both. Typo search with IMAP FUZZY works only with Solr, but iPhone Mail never asks for it. Searching all folders takes about 0.3 seconds with either. Solr needs its own Java container; flatcurve needs none. Index size: 14 MB for Solr, 66 MB for flatcurve, and 192 MB for flatcurve with mid-word matching, against 199 MB of mail.](/img/2026/10/mail-search.png)
+![Search on a 50,000-message test archive. Searching for "invo" finds "invoice": 0 hits with Solr, 513 with flatcurve. Accents, word variants like swimming and swims, and text inside attachments work with both. Typo search with IMAP FUZZY works only with Solr, but iPhone Mail never asks for it. Searching all folders takes about 0.3 seconds with either. Solr needs its own Java container; flatcurve needs none. Index size: 14 MB for Solr, 66 MB for flatcurve, and 192 MB for flatcurve with mid-word matching, against 199 MB of mail.](/img/2026/10/mail-search.png)
 *Same searches, same test archive*
 
-The first row is the one that sold me. The iPhone's Mail app searches as you type, so by the time I've typed "invo" it has already asked the server. Solr only matches whole words, so it finds nothing until the whole word "invoice" is typed. Flatcurve matches the start of words, so results show up while you're still typing.
+The first row is the one that sold me. As you type, the iPhone's Mail app only searches the mail that's already on the phone. When that doesn't turn up what I want, I hit Search and it asks the server to search the whole archive, sending whatever is in the box at that moment. Solr only matches whole words, so a partial word like "invo", or the first half of someone's name, came back empty. Flatcurve matches the start of words, so the server now finds "invoice" from "invo", much like the phone's own search does.
 
-![A mock-up of iPhone Mail searching the All folder for "invo", showing five invoices from different folders and years, each with "invo" highlighted](/img/2026/10/mail-phone-search.png)
-*A mock-up with made-up mail (not my inbox), but this is the idea: partial words now find things*
+![A mock-up of iPhone Mail after searching the All folder on the server for "invo", showing five invoices from different folders and years, each with "invo" highlighted](/img/2026/10/mail-phone-search.png)
+*A mock-up with made-up mail (not my inbox), but this is the idea: a partial word sent to the server now finds things*
 
 There are two trade-offs:
 
