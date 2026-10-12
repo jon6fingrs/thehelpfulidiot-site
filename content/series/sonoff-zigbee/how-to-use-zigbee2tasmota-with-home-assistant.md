@@ -605,21 +605,13 @@ On the other hand, if you have Tube's wired zigbee coordinator or the ZB-GW03 wi
 
 **Links to adapters:**
 
-*As an Amazon Associate I earn from qualifying purchases. The non-affiliate links go to the same product if you'd rather not use mine.*
-
 **Sonoff Zigbee**
 
-Affiliate link:
-
-[SONOFF ZBBridge Smart Zigbee Bridge Hub, WI-FI & Zigbee Dual-protocol Supporting, APP Control and Multi-device Management](https://www.amazon.com/gp/product/B08BFT44QL/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=B08BFT44QL&linkCode=as2&tag=thehelpfulidi-20&linkId=966fb5890513e368640eaf0f517c82f8)
-
-Non-affiliate link:
-
-[SONOFF ZBBridge Smart Zigbee Bridge Hub, WI-FI & Zigbee Dual-protocol Supporting, APP Control and Multi-device Management](https://www.amazon.com/dp/B08BFT44QL)
+*Update (October 2026): the SONOFF ZBBridge isn't really available anymore. It only turns up from third-party sellers at several times its original price, so I've removed the links.*
 
 [**Eachen ZB-GW03**](https://ewelink.eachen.cc/product/eachen-ewelink-zigbee-bridge-pro-zbbridge-pro/)
 
-[**Tube's ZB Coordinator**](https://www.tubeszb.com/product/cc2652_coordinator/1?cp=true&sa=false&sbp=false&q=false&category_id=2)
+[**Tube's ZB Coordinator**](https://tubeszb.com/)
 
 Let me know if you have any questions. Thanks for reading!
 

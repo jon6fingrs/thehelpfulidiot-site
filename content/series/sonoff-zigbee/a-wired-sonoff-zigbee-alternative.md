@@ -184,23 +184,13 @@ availability:
 
 ## Link to Purchase
 
-*As an Amazon Associate I earn from qualifying purchases, and the AliExpress affiliate links earn me a small commission too. The non-affiliate links go to the same product if you'd rather not use mine.*
-
-Affiliate Link:
-
-[AliExpress.com Product - EACHEN EWeLink Zigbee Bridge Pro (Zbbridge Pro)](https://s.click.aliexpress.com/e/_9IDiIh)
-
-[eWelink ZigBee 3.0 Smart Wired Wireless Gateway Hub](https://s.click.aliexpress.com/e/_Ac5sZP)
-
-Non-Affiliate Link:
-
-[AliExpress.com Product - EACHEN EWeLink Zigbee Bridge Pro (Zbbridge Pro)](https://www.aliexpress.com/item/4000459723849.html)
-
-[eWelink ZigBee 3.0 Smart Wired Wireless Gateway Hub](https://www.aliexpress.com/item/1005003020568421.html)
+*Update (October 2026): neither bridge is sold on AliExpress anymore, so I've removed those links.*
 
 EACHEN Website:
 
 [EACHEN eWeLink Zigbee Bridge Pro (zbbridge pro)](https://ewelink.eachen.cc/product/eachen-ewelink-zigbee-bridge-pro-zbbridge-pro/)
+
+*As an Amazon Associate I earn from qualifying purchases (the serial adapter link above).*
 
 ---
 
