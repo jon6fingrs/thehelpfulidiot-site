@@ -88,10 +88,12 @@ Well the wand is actually just an infrared transmitter which is fired when the w
 
 I hope this write-up was helpful. For only $19.95 on Amazon, I definitely think it is a good device at a good price with a lot of possibility. Please let me know if you have any questions.
 
+*As an Amazon Associate I earn from qualifying purchases. The non-affiliate links go to the same product if you'd rather not use mine.*
+
 **Affiliate Link**
 
 [FLIRC USB Universal Remote Control Receiver](https://www.amazon.com/gp/product/B01NBRBWS6/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=B01NBRBWS6&linkCode=as2&tag=thehelpfulidi-20&linkId=9a56ceec3c171749a83b8b1af6b4555c)
 
 **Non-Affiliate Link**
 
-<meta charset="utf-8">[FLIRC USB Universal Remote Control Receiver](https://www.amazon.com/Universal-Remote-Control-Receiver-Raspberry/dp/B01NBRBWS6?ref_=ast_sto_dp)
+[FLIRC USB Universal Remote Control Receiver](https://www.amazon.com/dp/B01NBRBWS6)

@@ -105,7 +105,7 @@ This is Tasmota 10 firmware compiled 12/5/21 using the above method. It should w
 
 Ok, now that we have the firmware, it's time to start flashing. Since we have an ESP32. I do not believe we can use Tasmotizer. I have Windows and used [ESP-Flasher-Windows-x64](https://github.com/Jason2866/ESP_Flasher/releases). Open it up, choose your serial port, the firmware we just compiled.
 
-Now the fun part with soldering. Below I have a photo of the ESP32 board and the corresponding connection on my Serial Adapter (I use this [one](https://www.amazon.com/gp/product/B00IJXZQ7C/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1)).
+Now the fun part with soldering. Below I have a photo of the ESP32 board and the corresponding connection on my Serial Adapter (I use this [one](https://amzn.to/47f5r6o) (affiliate link; [non-affiliate link](https://www.amazon.com/dp/B00IJXZQ7C))).
 
 ![ESP32 board - labels point to corresponding pin on Serial Converter](/wp-content/uploads/2021/09/image-3-1024x767.png)
 *ESP32 board - labels point to corresponding pin on Serial Converter*
@@ -184,21 +184,13 @@ availability:
 
 ## Link to Purchase
 
-Affiliate Link:
-
-[AliExpress.com Product - EACHEN EWeLink Zigbee Bridge Pro (Zbbridge Pro)](https://s.click.aliexpress.com/e/_9IDiIh)
-
-[eWelink ZigBee 3.0 Smart Wired Wireless Gateway Hub](https://s.click.aliexpress.com/e/_Ac5sZP)
-
-Non-Affiliate Link:
-
-[AliExpress.com Product - EACHEN EWeLink Zigbee Bridge Pro (Zbbridge Pro)](https://www.aliexpress.com/item/4000459723849.html)
-
-e[Welink ZigBee 3.0 Smart Wired Wireless Gateway Hub](https://www.aliexpress.com/item/1005003020568421.html)
+*Update (October 2026): neither bridge is sold on AliExpress anymore, so I've removed those links.*
 
 EACHEN Website:
 
 [EACHEN eWeLink Zigbee Bridge Pro (zbbridge pro)](https://ewelink.eachen.cc/product/eachen-ewelink-zigbee-bridge-pro-zbbridge-pro/)
+
+*As an Amazon Associate I earn from qualifying purchases (the serial adapter link above).*
 
 ---
 

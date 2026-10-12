@@ -414,10 +414,14 @@ In my house the lights also run on an automation: they come on with the basement
 
 ## Link to Purchase
 
+*As an Amazon Associate I earn from qualifying purchases. The non-affiliate links go to the same product if you'd rather not use mine.*
+
 Affiliate Link:
 
 [XMCOSY+ Outdoor String Lights, 49Ft](https://amzn.to/3zQTyEh)
 
 Non-Affiliate Link:
 
-[XMCOSY+ Outdoor String Lights, 49Ft](https://www.amazon.com/gp/product/B08614LWZK)
+[XMCOSY+ Outdoor String Lights, 49Ft](https://www.amazon.com/dp/B08614LWZK)
+
+*Update (October 2026): these look like the same lights sold as atomi Smart Color String Lights. The DP layout matches, and [tuya-local](https://github.com/make-all/tuya-local) has a config for the atomi ones ([my notes on DP 101 there](https://github.com/make-all/tuya-local/discussions/6419)). I haven't tested an atomi set myself.*
