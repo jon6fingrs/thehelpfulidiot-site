@@ -414,10 +414,12 @@ In my house the lights also run on an automation: they come on with the basement
 
 ## Link to Purchase
 
+*As an Amazon Associate I earn from qualifying purchases. The non-affiliate links go to the same product if you'd rather not use mine.*
+
 Affiliate Link:
 
 [XMCOSY+ Outdoor String Lights, 49Ft](https://amzn.to/3zQTyEh)
 
 Non-Affiliate Link:
 
-[XMCOSY+ Outdoor String Lights, 49Ft](https://www.amazon.com/gp/product/B08614LWZK)
+[XMCOSY+ Outdoor String Lights, 49Ft](https://www.amazon.com/dp/B08614LWZK)

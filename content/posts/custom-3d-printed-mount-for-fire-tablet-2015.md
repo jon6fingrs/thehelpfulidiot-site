@@ -54,6 +54,8 @@ In case anyone is interested, here is a copy of my STL file:
 
 And finally, here is the cord I used and the brush wall plate:
 
+*As an Amazon Associate I earn from qualifying purchases. The non-affiliate links go to the same product if you'd rather not use mine.*
+
 Affiliate Link:
 
 [GELRHONR Micro USB Cable U Shape,180 Degree Angle USB 5 Pin Nylon Braided Fast Data Sync Charging Cord USB A to USB B Fast Charger Wire for Most Micro USB Devices - Black 4.9Ft/1.5M](https://www.amazon.com/gp/product/B093SWG63B/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=B093SWG63B&linkCode=as2&tag=thehelpfulidi-20&linkId=bdc749058ad95a2e8fe1290c6fa30653)
@@ -62,8 +64,8 @@ Affiliate Link:
 
 Non-affiliate Link:
 
-[GELRHONR Micro USB Cable U Shape,180 Degree Angle USB 5 Pin Nylon Braided Fast Data Sync Charging Cord USB A to USB B Fast Charger Wire for Most Micro USB Devices - Black 4.9Ft/1.5M](https://www.amazon.com/gp/product/B093SWG63B)
+[GELRHONR Micro USB Cable U Shape,180 Degree Angle USB 5 Pin Nylon Braided Fast Data Sync Charging Cord USB A to USB B Fast Charger Wire for Most Micro USB Devices - Black 4.9Ft/1.5M](https://www.amazon.com/dp/B093SWG63B)
 
-[Single Brush Wall Plate 2-Pack,Single Gang faceplate Cable Pass Through Insert Wall Socket for HDTV, HDMI, Network, Coaxial Cables, Speaker Wires White](https://www.amazon.com/gp/product/B095FX5VFD/)
+[Single Brush Wall Plate 2-Pack,Single Gang faceplate Cable Pass Through Insert Wall Socket for HDTV, HDMI, Network, Coaxial Cables, Speaker Wires White](https://www.amazon.com/dp/B095FX5VFD)
 
 Let me know if you have any questions. Thanks!

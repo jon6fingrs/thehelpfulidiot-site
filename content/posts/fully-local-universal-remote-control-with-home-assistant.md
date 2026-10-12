@@ -44,7 +44,7 @@ Once that's done, it's just a matter of connecting the correct input with the co
 
 ## Solution: Remote Hardware
 
-After much searching, I came across the [Air Mouse Remote MX3 Pro with Backlit](https://amzn.to/3OGVINg). It is not Bluetooth. I actually could not find a decent Bluetooth Remote. It does still use a 2.4ghz signal. It comes with a pre-paired USB dongle. Just plug it into a computer, and BOOM- the computer has a hardware keyboard device added.
+After much searching, I came across the [Air Mouse Remote MX3 Pro with Backlit](https://amzn.to/3OGVINg) (affiliate link). It is not Bluetooth. I actually could not find a decent Bluetooth Remote. It does still use a 2.4ghz signal. It comes with a pre-paired USB dongle. Just plug it into a computer, and BOOM- the computer has a hardware keyboard device added.
 
 Another nice feature is it has 5 programmable IR buttons at the bottom for backup in the event something isn't working.
 
@@ -1122,14 +1122,8 @@ I'm sure there are many more possibilities and would be excited to see what othe
 
 ## Links
 
-Air Mouse Remote MX3 Pro with Backlit
+*As an Amazon Associate I earn from qualifying purchases. The non-affiliate links go to the same product if you'd rather not use mine.*
 
-Associate Link - [https://amzn.to/487vXMU](https://amzn.to/487vXMU)
+**Air Mouse Remote MX3 Pro with Backlit:** [affiliate link](https://amzn.to/487vXMU) · [non-affiliate link](https://www.amazon.com/dp/B08YRL56BT)
 
-Store Link - [https://www.amazon.com/gp/product/B08YRL56BT](https://www.amazon.com/gp/product/B08YRL56BT)
-
-Rii MX3 Multifunction
-
-Associate Link - https://amzn.to/3OGErnr
-
-Store Link - https://www.amazon.com/gp/product/B01CL3ZXGO
+**Rii MX3 Multifunction:** [affiliate link](https://amzn.to/3OGErnr) · [non-affiliate link](https://www.amazon.com/dp/B01CL3ZXGO)

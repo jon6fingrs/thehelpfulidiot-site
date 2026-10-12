@@ -16,7 +16,7 @@ Home automation is incredible and obviously in my opinion, a lot of fun. However
 
 Fortunately with the magic of Home Assistant and the [Local Tuya plugin](https://github.com/rospogrigio/localtuya), I have managed to run this light locally without any loss of functionality. As you may know, Tuya is a Chinese manufacturer who creates a lot of white label IoT devices. The devices, in my experience, tend to work well, but require cloud access to work through official channels. Local Tuya, on the other hand, is a custom integration which can grant local access to these Tuya devices and can work very well for our purposes.
 
-Unfortunately, Local Tuya, while set up to handle many different types of devices out of the box, is not able to handle the unique modes and functions of the [XMCOSY+ Outdoor String Lights](https://amzn.to/3MWAoQd). However, by at least allowing access to the device API, templates and automations can be used to simplify and restore the device's normal function locally. In this post, I hope to explain my method for solving this problem and that it will work for others.
+Unfortunately, Local Tuya, while set up to handle many different types of devices out of the box, is not able to handle the unique modes and functions of the [XMCOSY+ Outdoor String Lights](https://amzn.to/3MWAoQd) (affiliate link). However, by at least allowing access to the device API, templates and automations can be used to simplify and restore the device's normal function locally. In this post, I hope to explain my method for solving this problem and that it will work for others.
 
 ## Steps
 
@@ -596,10 +596,12 @@ Hope this helps some people! Let me know if you have any questions!
 
 ## Link to Purchase
 
+*As an Amazon Associate I earn from qualifying purchases. The non-affiliate links go to the same product if you'd rather not use mine.*
+
 Affiliate Link:
 
 [XMCOSY+ Outdoor String Lights, 49Ft](https://amzn.to/3zQTyEh)
 
 Non-Affiliate Link:
 
-[XMCOSY+ Outdoor String Lights, 49Ft](https://www.amazon.com/gp/product/B08614LWZK)
+[XMCOSY+ Outdoor String Lights, 49Ft](https://www.amazon.com/dp/B08614LWZK)
