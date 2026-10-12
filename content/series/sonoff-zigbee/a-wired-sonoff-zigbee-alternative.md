@@ -105,7 +105,7 @@ This is Tasmota 10 firmware compiled 12/5/21 using the above method. It should w
 
 Ok, now that we have the firmware, it's time to start flashing. Since we have an ESP32. I do not believe we can use Tasmotizer. I have Windows and used [ESP-Flasher-Windows-x64](https://github.com/Jason2866/ESP_Flasher/releases). Open it up, choose your serial port, the firmware we just compiled.
 
-Now the fun part with soldering. Below I have a photo of the ESP32 board and the corresponding connection on my Serial Adapter (I use this [one](https://www.amazon.com/dp/B00IJXZQ7C)).
+Now the fun part with soldering. Below I have a photo of the ESP32 board and the corresponding connection on my Serial Adapter (I use this [one](https://www.amazon.com/dp/B00IJXZQ7C?tag=thehelpfulidi-20) (affiliate link; [non-affiliate link](https://www.amazon.com/dp/B00IJXZQ7C))).
 
 ![ESP32 board - labels point to corresponding pin on Serial Converter](/wp-content/uploads/2021/09/image-3-1024x767.png)
 *ESP32 board - labels point to corresponding pin on Serial Converter*
@@ -184,7 +184,7 @@ availability:
 
 ## Link to Purchase
 
-*The AliExpress affiliate links earn me a small commission. The non-affiliate links go to the same product if you'd rather not use mine.*
+*As an Amazon Associate I earn from qualifying purchases, and the AliExpress affiliate links earn me a small commission too. The non-affiliate links go to the same product if you'd rather not use mine.*
 
 Affiliate Link:
 
