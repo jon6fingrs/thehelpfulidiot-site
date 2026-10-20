@@ -9,13 +9,11 @@ category = ["Smart Home"]
 tag = ["home assistant", "ai", "camera", "codeproject.ai", "yolo"]
 +++
 
-> **DRAFT: not ready to merge.** Every `TODO(Jon)` note below is a fact only the owner knows. Delete this box and every TODO before publishing.
+We live in a row home. There's no driveway in front, just a single parking pad behind the house, off the alley. If a car is already on it, the next one has to find a spot on the street. So the question I ask the most when I'm driving home is: **is the spot free?**
 
-We live in a row home. There's no driveway in front, just a single parking pad behind the house, off the alley. If a car is on it, the other car parks on the street, sometimes a few blocks away. So the question I ask the most when I'm driving home is: **is the spot free?**
+Now my phone answers it before I get there. As my wife or I pull up to the house, we get a voice message saying whether parking is available, and a notification with a picture from the alley camera so we can check it ourselves. In Apple CarPlay the parking pad even shows up as a garage door: open means free, closed means a car is on it.
 
-Now my phone answers it before I get there. When my wife or I get close to home, we get a voice message saying whether parking is available, and a notification with a picture from the alley camera so we can check it ourselves. In Apple CarPlay the parking pad even shows up as a garage door: open means free, closed means a car is on it.
-
-Under it all is a small AI model I trained to recognize our three cars. By my own count it's right more than 95% of the time.
+Under it all is a small AI model I trained to recognize our three cars. By my own estimate it's right more than 95% of the time.
 
 ![The alley at night in infrared: a dark SUV on the parking pad with the charger cable on the ground beside it](/img/2026/10/parking-pad-night.jpg)
 *The Hyundai on the pad at night, in infrared. This is the real picture the model works from.*
@@ -37,7 +35,7 @@ Two things turned it around:
 
 The camera is a Ring camera. [`ring-mqtt`](https://github.com/tsightler/ring-mqtt) gives Home Assistant a fresh snapshot about every 30 seconds, and an automation saves it over the same file each time. That one file is the input for everything else.
 
-To build a training set, I wrote a small Python script and ran it from cron every few minutes. It takes the current snapshot, shrinks it to fit in 640×640 pixels (the size the model trains on), pads it with black bars so the shape isn't distorted, and saves it under the next free number: `0001.jpg`, `0002.jpg` and so on. Over time that collects every kind of light and weather: sun, rain, snow, dusk, and night in infrared.
+To build a training set, I wrote a small Python script and ran it from cron every few minutes. It takes the current snapshot, shrinks it to fit in 640×640 pixels (the size the model trains on), pads it with black bars so the shape isn't distorted, and saves it under the next free number: `0001.jpg`, `0002.jpg` and so on. That gathers pictures in different light and weather, including night in infrared.
 
 ```python
 from PIL import Image
@@ -92,7 +90,7 @@ Even so, hundreds of near-identical pictures of one parked car don't teach much.
 *The Subaru parked toward one side at night, charging. It still needs to count as "taken".*
 
 ![The empty parking pad at night in infrared](/img/2026/10/parking-pad-empty.jpg)
-*The empty pad. Pictures with no car matter just as much.*
+*The empty pad at night.*
 
 ## Step 2: Label Them
 
@@ -158,20 +156,20 @@ Look at the second line. **The validation folder is the same as the training fol
 
 The first full run stopped on its own after about 5 hours. It found its best result at epoch 69, then went 300 rounds without beating it:
 
-| | Precision | Recall | mAP@50 |
-|---|---:|---:|---:|
-| All cars | 0.912 | 0.910 | 0.971 |
-| Hyundai | 0.942 | 0.961 | 0.985 |
-| Mercedes | 0.938 | 0.863 | 0.969 |
-| Subaru | 0.855 | 0.906 | 0.958 |
+| | Precision | Recall |
+|---|---:|---:|
+| All cars | 0.912 | 0.910 |
+| Hyundai | 0.942 | 0.961 |
+| Mercedes | 0.938 | 0.863 |
+| Subaru | 0.855 | 0.906 |
 
 (Precision is how often a "Subaru" call was right. Recall is how many of the real Subarus it found.)
 
-I should be honest about one thing: I trained several versions over a couple of weeks and didn't keep good notes. The folder on my server holds a few of them (`custom-model-276.pt`, `custom-model-370.pt` and so on), and I can't tell you for certain which training run the live model came from. So treat the numbers above as one early run, not a measurement of the model running today. What I can say is that the method is the same, and the live model has done the job well for a long time.
+I should be honest about one thing: I trained several versions along the way and didn't keep good notes. The folder on my server holds a few of them (`custom-model-276.pt`, `custom-model-370.pt` and so on), and I can't tell you for certain which training run the live model came from. So treat the numbers above as one early run, not a measurement of the model running today. What I can say is that the method is the same, and the live model has done the job well for a long time.
 
 ## Step 4: Put the Model in CodeProject.AI
 
-This was the part with the least documentation. CodeProject.AI's YOLOv5 detector looks in a `custom-models` folder inside its module. Any `.pt` file you drop in becomes its own endpoint, named after the file. My file is `custom-model.pt`, so my endpoint is `/v1/vision/custom/custom-model`.
+The trained model has to go where CodeProject.AI looks for custom ones. Its YOLOv5 detector looks in a `custom-models` folder inside its module. Any `.pt` file you drop in becomes its own endpoint, named after the file. My file is `custom-model.pt`, so my endpoint is `/v1/vision/custom/custom-model`.
 
 Because it runs in Docker, I mount the file into the container in my compose file:
 
@@ -256,7 +254,7 @@ scaled.save(sys.stdout.buffer, format="JPEG")
 Writing to `stdout` lets the whole thing be one pipe straight into `curl`, with no temporary files.
 
 ![The night picture cropped to the lower part of the frame and enlarged to twice its size, so the car fills most of it](/img/2026/10/parking-pad-crop.jpg)
-*What the model actually receives. The distant buildings, bins and the neighbor's car are cut off, and the car is big.*
+*What the model actually receives. The far end of the alley, including the neighbor's car, is cut off, and the car is big.*
 
 I'll be honest again: I'm not sure how much the crop still matters. I found that cropping helped *before* I had my own model, and I labeled my training pictures as whole frames. The crop stayed in the pipeline because it works, and I never took it out. Sending the uncropped picture to the model and comparing the results would be an easy experiment, but I haven't done it.
 
@@ -294,11 +292,9 @@ template:
 - It switches to **occupied** after one of our three cars has been seen for 34 seconds in a row.
 - It switches to **free** only after 64 seconds with none.
 
-Those odd numbers are roughly one and two snapshots. It's deliberately slower to say "free" than "taken".
-
 A final sensor follows that one, and it also turns on if the car charger is plugged in. That's what everything else in the house reads.
 
-I don't remember exactly how I picked those two numbers. They work out to about one and two snapshots, and they've held up, so I've left them alone.
+I don't remember exactly how I picked those two numbers. They work out to roughly one and two snapshots, and they've held up, so I've left them alone. It's slower to say "free" than "taken", which suits this job.
 
 ## Step 7: Tell the Phone
 
@@ -311,7 +307,7 @@ This is the part my family actually uses.
 **The voice alert.** This is an iPhone Shortcuts automation that runs by itself when my phone arrives at our address. It runs a shortcut called "Alley Parking" (and another, unrelated one that sends my location):
 
 ![The arrival automation in Shortcuts: it runs the Alley Parking shortcut, then a second shortcut that sends my location](/img/2026/10/shortcut-arrive.jpg)
-*The arrival automation. (I trimmed the street address off the top.)*
+*The arrival automation, cropped to its two steps.*
 
 "Alley Parking" only does anything when I'm driving. Each of us has a "driving" flag, `jon_driving` for me and `lauren_driving` for Lauren, and a pair of small shortcuts that flip it: "Jon Driving On" and "Jon Driving Off". Shortcuts automations run them when the phone connects to or disconnects from CarPlay or the car's Bluetooth. "On" checks the flag and, if it isn't already on, sets it and also tells Home Assistant to turn on a matching input boolean (with the Home Assistant app's **Perform action**). "Off" does the reverse.
 
@@ -333,12 +329,10 @@ When it's done talking, it puts the volume back with a second "Vol Boost" and ru
 
 So by the time I turn into the alley, I've heard the answer and I have a picture to glance at when I stop.
 
-The family room tablet also has the alley camera on a page of its own. Its bar shows the car the model identified next to the word "Alley", so a glance at the wall tells us which car is parked there.
+The family room tablet (one of the [wall tablets I wrote about before](/rewriting-my-home-assistant-dashboards-in-plain-html)) shows the alley camera in a card on its main page. The bar at the bottom names the car the model identified, along with what charging has cost this month, and a small badge shows what the charger is doing. A glance at the wall tells us which car is parked there.
 
 ![The alley camera card from the family room tablet: the night picture with a Subaru on the pad, a badge reading Charging 7.2 kW, 12.4 kWh, 2 h, and a bar reading Subaru, $24 of $61 this month on the left and Alley on the right](/img/2026/10/parking-pad-tablet.jpg)
 *The alley card on the family room tablet. The real dashboard code, but running against a fake Home Assistant: the charging numbers and costs are made up, and the picture is one of the snapshots above.*
-
-> **TODO(Jon):** still missing, and optional: a screenshot of the "Alley Garage Door" tile in CarPlay or Apple Home. It's the most surprising part of the setup. Blur anything private.
 
 ## Step 8: Keep the Camera Honest
 
