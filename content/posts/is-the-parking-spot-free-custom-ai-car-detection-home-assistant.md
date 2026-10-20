@@ -300,23 +300,24 @@ This is the part my family actually uses.
 ![The arrival automation in Shortcuts: it runs the Alley Parking shortcut, then a second shortcut that sends my location](/img/2026/10/shortcut-arrive.jpg)
 *The arrival automation. (I trimmed the street address off the top.)*
 
-"Alley Parking" only does anything when I'm driving. The first thing it does is check a global variable, `jon_driving`. If that's on, it raises the volume with another small shortcut ("Vol Boost"), asks Home Assistant for the state of the parking pad sensor using the Home Assistant app's **Render template** action, and speaks the answer: "Alley Parking Is AVAILABLE." or "Alley Parking Is NOT AVAILABLE." If I'm walking up instead, it stays quiet.
+"Alley Parking" only does anything when I'm driving. Separate automations (one for each of us) flip a "driving" flag when we get in the car: `jon_driving` for me and `lauren_driving` for Lauren. The first thing the shortcut does is check mine. If it's on, it raises the volume with another small shortcut ("Vol Boost"), asks Home Assistant for the state of the parking pad sensor using the Home Assistant app's **Render template** action, and speaks the answer: "Alley Parking Is AVAILABLE." or "Alley Parking Is NOT AVAILABLE." If I'm walking up instead, it stays quiet.
 
 ![The top of the Alley Parking shortcut: it reads the jon_driving variable, runs Vol Boost, renders a Home Assistant template, and speaks AVAILABLE if the result is off](/img/2026/10/shortcut-alley-parking-1.jpg)
 
 ![The rest of the Alley Parking shortcut: the NOT AVAILABLE branch, Vol Boost again, and a run of a second shortcut called Alley parking is](/img/2026/10/shortcut-alley-parking-2.jpg)
 
-When it's done talking, it runs a second shortcut, "Alley parking is", which asks the Home Assistant app for a snapshot from the alley camera and shows it in a notification:
+When it's done talking, it puts the volume back with a second "Vol Boost" and runs another shortcut, "Alley parking is", which asks the Home Assistant app for a snapshot from the alley camera and shows it, attached, in a notification:
 
 ![The Alley parking is shortcut: it receives text, replaces part of it, gets a camera snapshot from the Alley Camera, and shows a notification](/img/2026/10/shortcut-alley-parking-is.jpg)
 
+![The notification on the lock screen: Alley parking is AVAILABLE, with the camera picture of the empty parking pad underneath](/img/2026/10/shortcut-notification.jpg)
+*What lands on my phone. Lauren's phone does exactly the same, using her own driving flag.*
+
 So by the time I turn into the alley, I've heard the answer and I have a picture to glance at when I stop.
 
-> **TODO(Jon):** a few details I can't tell from the screenshots. (1) What sets `jon_driving` (a Focus, CarPlay connecting, something else)? (2) The `Vol Boost` call after the spoken answer: does it put the volume back? (3) The notification shows "Updated Text" with the snapshot: is the picture attached, or does it show another way? (4) Does Lauren's phone do the same thing?
+The family room tablet also has the alley camera on a page of its own. Its bar shows the car the model identified next to the word "Alley", so a glance at the wall tells us which car is parked there.
 
-> **TODO(Jon):** still missing: (1) the CarPlay or Apple Home tile, (2) the "Parking Behind House is…" notification with its picture (the one the tile tap sends), and (3) the family room tablet's alley view. Blur anything private. (The photo of the tablet slot below is a placeholder: it's the day picture again.)
-
-![The family room tablet's alley view with the camera picture and the name of the car the model identified](/img/2026/10/parking-pad-day.jpg)
+> **TODO(Jon):** still missing, and both are optional: (1) the CarPlay or Apple Home tile (a screenshot of the "Alley Garage Door" tile would be great, it's the most surprising part), and (2) the family room tablet's alley view with a car on the pad, so the car name shows. The screenshot you sent of the Wall Tablets page shows live door locks and Lauren's status, so I left it out.
 
 ## Step 8: Keep the Camera Honest
 
