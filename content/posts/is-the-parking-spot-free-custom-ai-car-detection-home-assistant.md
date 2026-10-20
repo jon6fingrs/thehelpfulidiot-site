@@ -11,7 +11,7 @@ tag = ["home assistant", "ai", "camera", "codeproject.ai", "yolo"]
 
 I live in a row home. There's no driveway in front, just a single parking pad behind the house, off the alley. If a car is already on it, the next one has to find a spot on the street. So the question I ask the most when I'm driving home is: **is the spot free?**
 
-Now my phone answers it before I get there. As I pull up to the house, I get a voice message saying whether parking is available, and a notification with a picture from the alley camera so I can check it myself. In Apple CarPlay the parking pad even shows up as a garage door: open means free, closed means a car is on it.
+Now my phone answers it before I get there. As I pull up to the house, I get a voice message saying whether parking is available, and a notification with a picture from the alley camera so I can check it myself. I'm not the only one who benefits: everyone else in my house who drives home to that pad gets the same alert on their own phone. In Apple CarPlay the parking pad even shows up as a garage door: open means free, closed means a car is on it.
 
 Under it all is a small AI model I trained to recognize my three cars. By my own estimate it's right more than 95% of the time.
 
@@ -302,14 +302,14 @@ This is the part I actually use.
 
 **The garage door.** I made a template cover called "Alley Garage Door" whose state is simply "the pad is free". Home Assistant's HomeKit bridge shows it to Apple Home, and Apple's CarPlay shows garage doors, so the parking pad appears on the car's screen as a door: open means a free spot, closed means taken. Tapping it sends the notification below. Nothing is opened or closed, since there's no door.
 
-**The notification.** A script sends my phone a message: "Parking Behind House is **AVAILABLE**" or "**NOT AVAILABLE**", with the latest snapshot attached. The picture matters, because it lets you check the AI at a glance. The script then waits ten minutes before it will run again, so tapping repeatedly can't spam anyone.
+**The notification.** A script sends a message to the phones of everyone who uses the pad, mine included: "Parking Behind House is **AVAILABLE**" or "**NOT AVAILABLE**", with the latest snapshot attached. The picture matters, because it lets you check the AI at a glance. The script then waits ten minutes before it will run again, so tapping repeatedly can't spam anyone.
 
 **The voice alert.** This is an iPhone Shortcuts automation that runs by itself when my phone arrives home. It runs a shortcut called "Alley Parking" (and another, unrelated one that sends my location):
 
 ![The arrival automation in Shortcuts: it runs the Alley Parking shortcut, then a second shortcut that sends my location](/img/2026/10/shortcut-arrive.jpg)
 *The arrival automation, cropped to its two steps.*
 
-"Alley Parking" only does anything when I'm driving. I have a "driving" flag, `jon_driving`, and a pair of small shortcuts that flip it: "Jon Driving On" and "Jon Driving Off". Shortcuts automations run them when the phone connects to or disconnects from CarPlay or the car's Bluetooth. "On" checks the flag and, if it isn't already on, sets it and also tells Home Assistant to turn on a matching input boolean (with the Home Assistant app's **Perform action**). "Off" does the reverse.
+"Alley Parking" only does anything when I'm driving. Everyone who gets these alerts has their own "driving" flag and their own pair of small shortcuts to flip it. Mine is `jon_driving`, with "Jon Driving On" and "Jon Driving Off". Shortcuts automations run them when the phone connects to or disconnects from CarPlay or the car's Bluetooth. "On" checks the flag and, if it isn't already on, sets it and also tells Home Assistant to turn on a matching input boolean (with the Home Assistant app's **Perform action**). "Off" does the reverse.
 
 ![The Jon Driving On shortcut: if the flag is not already on, it sets the jon_driving variable to On, builds a small dictionary with the input boolean's entity ID, and performs the Turn on input boolean action on the Home server](/img/2026/10/shortcut-driving-on.jpg)
 *The "Driving On" shortcut. The first steps, not shown, read the flag and check it.*
@@ -325,11 +325,11 @@ When it's done talking, it puts the volume back with a second "Vol Boost" and ru
 ![The Alley parking is shortcut: it receives text, replaces part of it, gets a camera snapshot from the Alley Camera, and shows a notification](/img/2026/10/shortcut-alley-parking-is.jpg)
 
 ![The notification on the lock screen: Alley parking is AVAILABLE, with the camera picture of the empty parking pad underneath](/img/2026/10/shortcut-notification.jpg)
-*What lands on my phone.*
+*What lands on my phone, and on everyone else's who uses the pad.*
 
 So by the time I turn into the alley, I've heard the answer and I have a picture to glance at when I stop.
 
-The family room tablet (one of the [wall tablets I wrote about before](/rewriting-my-home-assistant-dashboards-in-plain-html)) shows the alley camera in a card on its main page. The bar at the bottom names the car the model identified, along with what charging has cost this month, and a small badge shows what the charger is doing. A glance at the wall tells me which car is parked there.
+The family room tablet (one of the [wall tablets I wrote about before](/rewriting-my-home-assistant-dashboards-in-plain-html)) shows the alley camera in a card on its main page. The bar at the bottom names the car the model identified, along with what charging has cost this month, and a small badge shows what the charger is doing. A glance at the wall tells anyone walking by which car is parked there.
 
 ![The alley camera card from the family room tablet: the night picture with a Subaru on the pad, a badge reading Charging 7.2 kW, 12.4 kWh, 2 h, and a bar reading Subaru, $24 of $61 this month on the left and Alley on the right](/img/2026/10/parking-pad-tablet.jpg)
 *The alley card on the family room tablet. The real dashboard code, but running against a fake Home Assistant: the charging numbers and costs are made up, and the picture is one of the snapshots above.*
@@ -340,7 +340,7 @@ A detector that's looking at a frozen picture will happily tell you the same wro
 
 ## How Well Does It Work?
 
-I haven't measured it with a stopwatch and a spreadsheet. But it's been running for a long time, I use it constantly, and my honest estimate is that it's right more than 95% of the time. The misses are rare. When it's wrong, it's almost always the same kind of mistake: it says a car is there when the pad is empty. A false "taken" is the safer error, since the notification includes the picture and you can see for yourself. I haven't tracked the exact rate.
+I haven't measured it with a stopwatch and a spreadsheet. But it's been running for a long time, other people in the house depend on it as much as I do, and my honest estimate is that it's right more than 95% of the time. The misses are rare. When it's wrong, it's almost always the same kind of mistake: it says a car is there when the pad is empty. A false "taken" is the safer error, since the notification includes the picture and you can see for yourself, and with other people relying on it, I'd rather it be wrong in the harmless direction. I haven't tracked the exact rate.
 
 The scores in the training table above are not an independent test, because the model was checked against the same pictures it learned from. The real test is the one I've been running ever since: living with it. If you build your own, keep some pictures out of training and check against those.
 
