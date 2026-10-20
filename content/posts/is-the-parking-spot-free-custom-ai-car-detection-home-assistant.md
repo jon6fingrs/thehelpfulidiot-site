@@ -300,7 +300,12 @@ This is the part my family actually uses.
 ![The arrival automation in Shortcuts: it runs the Alley Parking shortcut, then a second shortcut that sends my location](/img/2026/10/shortcut-arrive.jpg)
 *The arrival automation. (I trimmed the street address off the top.)*
 
-"Alley Parking" only does anything when I'm driving. Separate automations (one for each of us) flip a "driving" flag when we get in the car: `jon_driving` for me and `lauren_driving` for Lauren. The first thing the shortcut does is check mine. If it's on, it raises the volume with another small shortcut ("Vol Boost"), asks Home Assistant for the state of the parking pad sensor using the Home Assistant app's **Render template** action, and speaks the answer: "Alley Parking Is AVAILABLE." or "Alley Parking Is NOT AVAILABLE." If I'm walking up instead, it stays quiet.
+"Alley Parking" only does anything when I'm driving. Each of us has a "driving" flag, `jon_driving` for me and `lauren_driving` for Lauren, and a pair of small shortcuts that flip it when we get in and out of the car: "Jon Driving On" and "Jon Driving Off". "On" checks the flag and, if it isn't already on, sets it and also tells Home Assistant to turn on a matching input boolean (with the Home Assistant app's **Perform action**). "Off" does the reverse.
+
+![The Jon Driving On shortcut: if the flag is not already on, it sets the jon_driving variable to On, builds a small dictionary with the input boolean's entity ID, and performs the Turn on input boolean action on the Home server](/img/2026/10/shortcut-driving-on.jpg)
+*The "Driving On" shortcut. The first steps, not shown, read the flag and check it.*
+
+The first thing "Alley Parking" does is read my flag. If it's on, it raises the volume with another small shortcut ("Vol Boost"), asks Home Assistant for the state of the parking pad sensor using the Home Assistant app's **Render template** action, and speaks the answer: "Alley Parking Is AVAILABLE." or "Alley Parking Is NOT AVAILABLE." If I'm walking up instead, it stays quiet.
 
 ![The top of the Alley Parking shortcut: it reads the jon_driving variable, runs Vol Boost, renders a Home Assistant template, and speaks AVAILABLE if the result is off](/img/2026/10/shortcut-alley-parking-1.jpg)
 
@@ -316,6 +321,8 @@ When it's done talking, it puts the volume back with a second "Vol Boost" and ru
 So by the time I turn into the alley, I've heard the answer and I have a picture to glance at when I stop.
 
 The family room tablet also has the alley camera on a page of its own. Its bar shows the car the model identified next to the word "Alley", so a glance at the wall tells us which car is parked there.
+
+> **TODO(Jon):** what starts "Driving On" and "Driving Off" (CarPlay connecting, the car's Bluetooth, a Focus)? I can't tell from the screenshots.
 
 > **TODO(Jon):** still missing, and both are optional: (1) the CarPlay or Apple Home tile (a screenshot of the "Alley Garage Door" tile would be great, it's the most surprising part), and (2) the family room tablet's alley view with a car on the pad, so the car name shows. The screenshot you sent of the Wall Tablets page shows live door locks and Lauren's status, so I left it out.
 
