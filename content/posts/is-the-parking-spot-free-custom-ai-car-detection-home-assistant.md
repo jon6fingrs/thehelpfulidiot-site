@@ -79,7 +79,7 @@ copy_and_save_sequentially()
 
 I used almost the same function once more to standardize the pictures I had already collected by hand: it loops over a whole folder and writes the 640×640 padded copies into another one.
 
-> **TODO(Jon):** your crontab line, if you'd like it shown (`crontab -l | grep photo-save`), and roughly how many weeks it ran. The numbers in the training-images folder went past 3,800.
+I only let it run for a few days, then commented the cron line out. Because the lighting changes slowly and the cars sit still, a few days already covered a lot.
 
 One thing I worried about at first was overfitting: a model that has memorized its pictures instead of learning what a car looks like. For a general-purpose model that's a real problem. For mine it turned out to help. The camera never moves, there are only three answers, and the cars park in nearly the same places every time, so a model that knows exactly what *these* cars look like from *this* spot is just what I want. It's a very narrow job, and I wouldn't claim the same thing works for a camera that sees strangers' cars.
 
@@ -115,9 +115,9 @@ mercedes
 subaru
 ```
 
-A few of my example files are named for how the picture is framed: `hyundai-full-1.jpg`, `hyundai-cropped-1.jpg`, `hyundai-left-1.jpg`, `hyundai-right-1.jpg`. Each is a different view of the same scene: the whole frame, the cropped area, and the left or right half. I also went back and labeled the images a second time after resizing them to 640×640, because the boxes from the original size were no longer in the right place.
+Along the way I also tried different framings of the same scene. An early test folder of mine has files like `hyundai-full-1.jpg`, `hyundai-cropped-1.jpg`, `hyundai-left-1.jpg` and `hyundai-right-1.jpg`: the whole frame, a crop, and the left or right half. I also went back and labeled the images a second time after resizing them to 640×640, because the boxes from the original size were no longer in the right place.
 
-> **TODO(Jon):** how long did labeling take? How did you tell the model "this is an empty pad": images with no label file, or something else?
+Labeling didn't take long, and that's the nice thing about a fixed camera. Once a car is parked it doesn't move, so a whole run of pictures has the same car in the same place, with only the light and shadows changing. I labeled one picture by hand, then automated copying that box to the rest of the pictures of that parked car.
 
 ## Step 3: Train
 
@@ -167,19 +167,7 @@ The first full run stopped on its own after about 5 hours. It found its best res
 
 (Precision is how often a "Subaru" call was right. Recall is how many of the real Subarus it found.)
 
-> **TODO(Jon):** the model running today may **not** be that first one. The server's `custom-model.pt` (56.8 MB, Nov 2024) is the same size as `custom-model-276.pt`, and the 14 MB `custom-model-370.pt` matches the first run (it stopped at epoch 370). These two commands will tell us which file is which. The first one runs on the server and shows which files are byte-for-byte the same:
->
-> ```bash
-> cd ~/codeproject && md5sum custom-model.pt custom-model-*.pt best.pt
-> ```
->
-> The second runs on the training machine inside the `yolov5` folder (it prints the epoch, the date, the model size and the class names stored in the file; a depth of 0.33 is the small model, 0.67 medium, 1.0 large). Please run it for `custom-model.pt` and paste the output:
->
-> ```bash
-> python3 -c "import torch; c=torch.load('/path/to/custom-model.pt', map_location='cpu', weights_only=False); print(c.get('epoch'), c.get('date'), c['model'].yaml.get('depth_multiple'), c['model'].names)"
-> ```
->
-> Also, how many pictures are in each dataset folder (`dataset/image-collections`, `dataset/multiple-vehicles`, `dataset/car`)? `ls dataset/multiple-vehicles/images/train | wc -l` works for each. If you retrained with a separate validation set, I'll replace the caveat above with real numbers.
+I should be honest about one thing: I trained several versions over a couple of weeks and didn't keep good notes. The folder on my server holds a few of them (`custom-model-276.pt`, `custom-model-370.pt` and so on), and I can't tell you for certain which training run the live model came from. So treat the numbers above as one early run, not a measurement of the model running today. What I can say is that the method is the same, and the live model has done the job well for a long time.
 
 ## Step 4: Put the Model in CodeProject.AI
 
@@ -210,7 +198,9 @@ curl -s -X POST -F "image=@alley.jpg" -F "min_confidence=0.2" \
 
 The answer comes back as JSON, with a `message` (like "Found hyundai"), a `count`, and a list of `predictions`, each with a label, a confidence and a box.
 
-> **TODO(Jon):** did `best.pt` load as it was, or did you have to convert or rename anything? Does the server use the GTX 1060 now? (The `inferenceDevice` in the old notes said CPU.) What's the usual `inferenceMs`?
+I trained on the GPU, but I run detection on the CPU, and it's fast enough: one picture every 30 seconds is easy work.
+
+> **TODO(Jon):** can you confirm the trained weights went in as they were, with no conversion? And what's the usual detection time? Home Assistant already keeps it: Developer Tools → States, find `sensor.alley_car_detection`, and read its `inferenceMs` attribute.
 
 One small thing that bit me: from inside the Home Assistant container, the AI server's container name would not resolve reliably, so my config uses the Docker network's gateway address instead. That's a private address and could change if the network is recreated.
 
@@ -255,7 +245,7 @@ Writing to `stdout` lets the whole thing be one pipe straight into `curl`, with 
 ![The night picture cropped to the lower part of the frame and enlarged to twice its size, so the car fills most of it](/img/2026/10/parking-pad-crop.jpg)
 *What the model actually receives. The distant buildings, bins and the neighbor's car are cut off, and the car is big.*
 
-> **TODO(Jon):** your example folder has cropped and left/right-half versions as well as whole frames, so I think the model was trained on crops too, which would explain why the crop works so well in production. Is that right? And did the crop also help by hiding the far end of the alley, where other cars sit?
+I'll be honest again: I'm not sure how much the crop still matters. I found that cropping helped *before* I had my own model, and I labeled my training pictures as whole frames. The crop stayed in the pipeline because it works, and I never took it out. Sending the uncropped picture to the model and comparing the results would be an easy experiment, but I haven't done it.
 
 The sensor refreshes in two ways. One is a slow timer every 5 minutes, as a safety net. The faster way is an automation that runs every time a new snapshot arrives: it saves the picture, waits two seconds for the file to finish writing, then tells the sensor to update. So the answer is usually about 30 seconds old at most.
 
@@ -295,7 +285,7 @@ Those odd numbers are roughly one and two snapshots. It's deliberately slower to
 
 A final sensor follows that one, and it also turns on if the car charger is plugged in. That's what everything else in the house reads.
 
-> **TODO(Jon):** why 34 and 64? Were they tuned from real data, or picked by feel?
+I don't remember exactly how I picked those two numbers. They work out to about one and two snapshots, and they've held up, so I've left them alone.
 
 ## Step 7: Tell the Phone
 
@@ -317,23 +307,15 @@ A detector that's looking at a frozen picture will happily tell you the same wro
 
 ## How Well Does It Work?
 
-I haven't measured it with a stopwatch and a spreadsheet. But it's been running for a long time, we use it constantly, and my honest estimate is that it's right more than 95% of the time. The failures I know of:
-
-> **TODO(Jon):** what do the misses look like (a particular night, snow on the car, someone else's car, a delivery truck, the Mercedes in the dark)? Any fix you made? If you want a real number, run this on the server and I'll turn it into a chart:
->
-> ```bash
-> docker exec homeassistant python3 /config/scripts/ha_check.py --changes=binary_sensor.alley_car_occupancy
-> ```
+I haven't measured it with a stopwatch and a spreadsheet. But it's been running for a long time, we use it constantly, and my honest estimate is that it's right more than 95% of the time. The misses are rare. When it's wrong, it's almost always the same kind of mistake: it says a car is there when the pad is empty. A false "taken" is the safer error, since the notification includes the picture and you can see for yourself. I haven't tracked the exact rate.
 
 The scores in the training table above are not an independent test, because the model was checked against the same pictures it learned from. The real test is the one I've been running ever since: living with it. If you build your own, keep some pictures out of training and check against those.
 
 ## What I'd Tell Someone Starting Out
 
 - **Fix your camera view before collecting pictures.** A fixed camera is a big advantage. The model never has to cope with changing angles.
-- **Variety beats volume.** A thousand copies of the same parked car are worth less than fifty different situations.
-- **Include the empty scene.** The model has to know what "nothing" looks like too.
-- **Crop and enlarge.** If your target is small in the frame, this may help more than any training setting.
-- **Use a held-out set.** Keep some pictures aside that the model never sees, and keep a copy of any model that works before you try to improve it.
+- **Match the effort to the job.** A general model needs lots of varied pictures. A fixed camera with three possible answers needs far fewer, and a model that has nearly memorized your scene can be exactly what you want.
+- **Think about the empty scene.** A model that only knows your three cars has to answer "none" for an empty pad, and that's the case where mine still slips now and then.
+- **Try cropping.** Cropping is what first got my generic model to see our cars at all. If your target is small in the frame, it's worth a try.
+- **Use a held-out set.** Keep some pictures aside that the model never sees, and keep a copy of any model that works before you try to improve it. Also write down which training run each file came from. I didn't, and now I can't say.
 - **Make the answer slow to change.** A little patience in the logic matters more than a better model.
-
-> **TODO(Jon):** I can also write a follow-up about the other thing this feeds: the EV charger's monthly cost split by car, using this model to know which car is plugged in. Say the word. If it's a follow-up, it would become a two-part series with this post, so I'll ask you before moving anything.
