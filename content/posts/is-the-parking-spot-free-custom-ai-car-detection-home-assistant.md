@@ -1,19 +1,19 @@
 +++
-title = "Is the Parking Spot Free? Training My Own AI to Recognize Our Cars"
+title = "Is the Parking Spot Free? Training My Own AI to Recognize My Cars"
 date = 2026-10-20
 path = "is-the-parking-spot-free-custom-ai-car-detection-home-assistant"
-description = "I trained a small YOLOv5 model on photos from my alley camera so Home Assistant can tell our three cars apart, and so my phone can say whether the parking spot behind the house is free before I get home."
+description = "I trained a small YOLOv5 model on photos from my alley camera so Home Assistant can tell my three cars apart, and so my phone can say whether the parking spot behind the house is free before I get home."
 
 [taxonomies]
 category = ["Smart Home"]
 tag = ["home assistant", "ai", "camera", "codeproject.ai", "yolo"]
 +++
 
-We live in a row home. There's no driveway in front, just a single parking pad behind the house, off the alley. If a car is already on it, the next one has to find a spot on the street. So the question I ask the most when I'm driving home is: **is the spot free?**
+I live in a row home. There's no driveway in front, just a single parking pad behind the house, off the alley. If a car is already on it, the next one has to find a spot on the street. So the question I ask the most when I'm driving home is: **is the spot free?**
 
-Now my phone answers it before I get there. As my wife or I pull up to the house, we get a voice message saying whether parking is available, and a notification with a picture from the alley camera so we can check it ourselves. In Apple CarPlay the parking pad even shows up as a garage door: open means free, closed means a car is on it.
+Now my phone answers it before I get there. As I pull up to the house, I get a voice message saying whether parking is available, and a notification with a picture from the alley camera so I can check it myself. In Apple CarPlay the parking pad even shows up as a garage door: open means free, closed means a car is on it.
 
-Under it all is a small AI model I trained to recognize our three cars. By my own estimate it's right more than 95% of the time.
+Under it all is a small AI model I trained to recognize my three cars. By my own estimate it's right more than 95% of the time.
 
 ![The alley at night in infrared: a dark SUV on the parking pad with the charger cable on the ground beside it](/img/2026/10/parking-pad-night.jpg)
 *The Hyundai on the pad at night, in infrared. This is the real picture the model works from.*
@@ -22,14 +22,14 @@ Under it all is a small AI model I trained to recognize our three cars. By my ow
 
 I run [CodeProject.AI](https://www.codeproject.com/Articles/5322557/CodeProject-AI-Server-AI-the-easy-way) in Docker on my home server. It's a free object detection server that runs on your own hardware, and Home Assistant can send it pictures over a simple HTTP call. Out of the box it knows what a "car" is. I started there, using the ready-made `ipcam-combined` model that comes with it.
 
-That did not go well. Our alley camera is a wide-angle view looking down on the pad from above, so the cars aren't seen from the side the way they are in most training photos. The generic model often found nothing at all. It also couldn't do the one thing I actually cared about, which was to tell *our* cars from anyone else's.
+That did not go well. My alley camera is a wide-angle view looking down on the pad from above, so the cars aren't seen from the side the way they are in most training photos. The generic model often found nothing at all. It also couldn't do the one thing I actually cared about, which was to tell *my* cars from anyone else's.
 
-I only wanted one question answered: *which of our three cars is on the pad, if any?* That's three possible answers, from one camera that never moves. (I set all of this up about two years ago, with a lot of help from ChatGPT on the training side.)
+I only wanted one question answered: *which of my three cars is on the pad, if any?* That's three possible answers, from one camera that never moves. (I set all of this up about two years ago, with a lot of help from ChatGPT on the training side.)
 
 Two things turned it around:
 
 1. **Cropping.** When I cut the picture down to just the area where the car parks, the model suddenly saw cars it had missed in the full picture. The car only takes up part of the frame, and a small object in a large picture is hard to detect.
-2. **Training my own model on our three cars.** Not "car", but `hyundai`, `mercedes` and `subaru`.
+2. **Training my own model on my three cars.** Not "car", but `hyundai`, `mercedes` and `subaru`.
 
 ## Step 1: Collect Pictures
 
@@ -119,7 +119,7 @@ Labeling didn't take long, and that's the nice thing about a fixed camera. Once 
 
 ## Step 3: Train
 
-I used [YOLOv5](https://github.com/ultralytics/yolov5), the version CodeProject.AI's detector understands, and started from the small pretrained `yolov5s.pt` model instead of from scratch. It already knows what edges, wheels and windows look like, so my 262 pictures only have to teach it *our* cars.
+I used [YOLOv5](https://github.com/ultralytics/yolov5), the version CodeProject.AI's detector understands, and started from the small pretrained `yolov5s.pt` model instead of from scratch. It already knows what edges, wheels and windows look like, so my 262 pictures only have to teach it *my* cars.
 
 The training machine is an old laptop (an Intel i7-8750H and a GTX 1060 with 6 GB of memory), so the settings are modest. This was the command:
 
@@ -289,7 +289,7 @@ template:
 ```
 {% endraw %}
 
-- It switches to **occupied** after one of our three cars has been seen for 34 seconds in a row.
+- It switches to **occupied** after one of my three cars has been seen for 34 seconds in a row.
 - It switches to **free** only after 64 seconds with none.
 
 A final sensor follows that one, and it also turns on if the car charger is plugged in. That's what everything else in the house reads.
@@ -298,18 +298,18 @@ I don't remember exactly how I picked those two numbers. They work out to roughl
 
 ## Step 7: Tell the Phone
 
-This is the part my family actually uses.
+This is the part I actually use.
 
 **The garage door.** I made a template cover called "Alley Garage Door" whose state is simply "the pad is free". Home Assistant's HomeKit bridge shows it to Apple Home, and Apple's CarPlay shows garage doors, so the parking pad appears on the car's screen as a door: open means a free spot, closed means taken. Tapping it sends the notification below. Nothing is opened or closed, since there's no door.
 
-**The notification.** A script sends both of our phones a message: "Parking Behind House is **AVAILABLE**" or "**NOT AVAILABLE**", with the latest snapshot attached. The picture matters, because it lets you check the AI at a glance. The script then waits ten minutes before it will run again, so tapping repeatedly can't spam anyone.
+**The notification.** A script sends my phone a message: "Parking Behind House is **AVAILABLE**" or "**NOT AVAILABLE**", with the latest snapshot attached. The picture matters, because it lets you check the AI at a glance. The script then waits ten minutes before it will run again, so tapping repeatedly can't spam anyone.
 
-**The voice alert.** This is an iPhone Shortcuts automation that runs by itself when my phone arrives at our address. It runs a shortcut called "Alley Parking" (and another, unrelated one that sends my location):
+**The voice alert.** This is an iPhone Shortcuts automation that runs by itself when my phone arrives home. It runs a shortcut called "Alley Parking" (and another, unrelated one that sends my location):
 
 ![The arrival automation in Shortcuts: it runs the Alley Parking shortcut, then a second shortcut that sends my location](/img/2026/10/shortcut-arrive.jpg)
 *The arrival automation, cropped to its two steps.*
 
-"Alley Parking" only does anything when I'm driving. Each of us has a "driving" flag, `jon_driving` for me and `lauren_driving` for Lauren, and a pair of small shortcuts that flip it: "Jon Driving On" and "Jon Driving Off". Shortcuts automations run them when the phone connects to or disconnects from CarPlay or the car's Bluetooth. "On" checks the flag and, if it isn't already on, sets it and also tells Home Assistant to turn on a matching input boolean (with the Home Assistant app's **Perform action**). "Off" does the reverse.
+"Alley Parking" only does anything when I'm driving. I have a "driving" flag, `jon_driving`, and a pair of small shortcuts that flip it: "Jon Driving On" and "Jon Driving Off". Shortcuts automations run them when the phone connects to or disconnects from CarPlay or the car's Bluetooth. "On" checks the flag and, if it isn't already on, sets it and also tells Home Assistant to turn on a matching input boolean (with the Home Assistant app's **Perform action**). "Off" does the reverse.
 
 ![The Jon Driving On shortcut: if the flag is not already on, it sets the jon_driving variable to On, builds a small dictionary with the input boolean's entity ID, and performs the Turn on input boolean action on the Home server](/img/2026/10/shortcut-driving-on.jpg)
 *The "Driving On" shortcut. The first steps, not shown, read the flag and check it.*
@@ -325,11 +325,11 @@ When it's done talking, it puts the volume back with a second "Vol Boost" and ru
 ![The Alley parking is shortcut: it receives text, replaces part of it, gets a camera snapshot from the Alley Camera, and shows a notification](/img/2026/10/shortcut-alley-parking-is.jpg)
 
 ![The notification on the lock screen: Alley parking is AVAILABLE, with the camera picture of the empty parking pad underneath](/img/2026/10/shortcut-notification.jpg)
-*What lands on my phone. Lauren's phone does exactly the same, using her own driving flag.*
+*What lands on my phone.*
 
 So by the time I turn into the alley, I've heard the answer and I have a picture to glance at when I stop.
 
-The family room tablet (one of the [wall tablets I wrote about before](/rewriting-my-home-assistant-dashboards-in-plain-html)) shows the alley camera in a card on its main page. The bar at the bottom names the car the model identified, along with what charging has cost this month, and a small badge shows what the charger is doing. A glance at the wall tells us which car is parked there.
+The family room tablet (one of the [wall tablets I wrote about before](/rewriting-my-home-assistant-dashboards-in-plain-html)) shows the alley camera in a card on its main page. The bar at the bottom names the car the model identified, along with what charging has cost this month, and a small badge shows what the charger is doing. A glance at the wall tells me which car is parked there.
 
 ![The alley camera card from the family room tablet: the night picture with a Subaru on the pad, a badge reading Charging 7.2 kW, 12.4 kWh, 2 h, and a bar reading Subaru, $24 of $61 this month on the left and Alley on the right](/img/2026/10/parking-pad-tablet.jpg)
 *The alley card on the family room tablet. The real dashboard code, but running against a fake Home Assistant: the charging numbers and costs are made up, and the picture is one of the snapshots above.*
@@ -340,7 +340,7 @@ A detector that's looking at a frozen picture will happily tell you the same wro
 
 ## How Well Does It Work?
 
-I haven't measured it with a stopwatch and a spreadsheet. But it's been running for a long time, we use it constantly, and my honest estimate is that it's right more than 95% of the time. The misses are rare. When it's wrong, it's almost always the same kind of mistake: it says a car is there when the pad is empty. A false "taken" is the safer error, since the notification includes the picture and you can see for yourself. I haven't tracked the exact rate.
+I haven't measured it with a stopwatch and a spreadsheet. But it's been running for a long time, I use it constantly, and my honest estimate is that it's right more than 95% of the time. The misses are rare. When it's wrong, it's almost always the same kind of mistake: it says a car is there when the pad is empty. A false "taken" is the safer error, since the notification includes the picture and you can see for yourself. I haven't tracked the exact rate.
 
 The scores in the training table above are not an independent test, because the model was checked against the same pictures it learned from. The real test is the one I've been running ever since: living with it. If you build your own, keep some pictures out of training and check against those.
 
@@ -349,6 +349,6 @@ The scores in the training table above are not an independent test, because the 
 - **Fix your camera view before collecting pictures.** A fixed camera is a big advantage. The model never has to cope with changing angles.
 - **Match the effort to the job.** A general model needs lots of varied pictures. A fixed camera with three possible answers needs far fewer, and a model that has nearly memorized your scene can be exactly what you want.
 - **Think about the empty scene.** A model that only knows your three cars has to answer "none" for an empty pad, and that's the case where mine still slips now and then.
-- **Try cropping.** Cropping is what first got my generic model to see our cars at all. If your target is small in the frame, it's worth a try.
+- **Try cropping.** Cropping is what first got my generic model to see my cars at all. If your target is small in the frame, it's worth a try.
 - **Use a held-out set.** Keep some pictures aside that the model never sees, and keep a copy of any model that works before you try to improve it. Also write down which training run each file came from. I didn't, and now I can't say.
 - **Make the answer slow to change.** A little patience in the logic matters more than a better model.
