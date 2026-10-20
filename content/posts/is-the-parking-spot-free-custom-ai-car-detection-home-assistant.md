@@ -18,7 +18,7 @@ Now my phone answers it before I get there. When my wife or I get close to home,
 Under it all is a small AI model I trained to recognize our three cars. By my own count it's right more than 95% of the time.
 
 ![The alley at night in infrared: a dark SUV on the parking pad with the charger cable on the ground beside it](/img/2026/10/parking-pad-night.jpg)
-*What the camera sees at night. This is the real picture the model works from.*
+*The Hyundai on the pad at night, in infrared. This is the real picture the model works from.*
 
 ## Why a Generic Model Wasn't Enough
 
@@ -26,7 +26,7 @@ I run [CodeProject.AI](https://www.codeproject.com/Articles/5322557/CodeProject-
 
 That did not go well. Our alley camera is a wide-angle view looking down on the pad from above, so the cars aren't seen from the side the way they are in most training photos. The generic model often found nothing at all. It also couldn't do the one thing I actually cared about, which was to tell *our* cars from anyone else's.
 
-> **TODO(Jon):** you built the first version with ChatGPT's help about two years ago. This blog is upfront about AI help, so do you want a sentence saying so here? Also: why you wanted the cars told apart, not just "a car". (My guess: other people's cars use the alley, and the EV charger wants to know which of our cars is plugged in. Is that right?)
+I only wanted one question answered: *which of our three cars is on the pad, if any?* That's three possible answers, from one camera that never moves. (I set all of this up about two years ago, with a lot of help from ChatGPT on the training side.)
 
 Two things turned it around:
 
@@ -37,22 +37,62 @@ Two things turned it around:
 
 The camera is a Ring camera. [`ring-mqtt`](https://github.com/tsightler/ring-mqtt) gives Home Assistant a fresh snapshot about every 30 seconds, and an automation saves it over the same file each time. That one file is the input for everything else.
 
-To build a training set, I wrote a small Python script that runs from cron every 5 or 10 minutes. It takes the current snapshot, shrinks it to fit in 640×640 pixels (the size the model trains on), pads it with black bars so the shape isn't distorted, and saves it as `0001.jpg`, `0002.jpg` and so on. Over time that collects every kind of light and weather: sun, rain, snow, dusk, and night in infrared.
+To build a training set, I wrote a small Python script and ran it from cron every few minutes. It takes the current snapshot, shrinks it to fit in 640×640 pixels (the size the model trains on), pads it with black bars so the shape isn't distorted, and saves it under the next free number: `0001.jpg`, `0002.jpg` and so on. Over time that collects every kind of light and weather: sun, rain, snow, dusk, and night in infrared.
 
-> **TODO(Jon):** run `cat ~/photo-save.py` on the server and paste it here so I can include the real script. Also, roughly how many weeks did you collect for, and how many pictures ended up in the folder? (The numbers I saw went past 3,800.)
+```python
+from PIL import Image
+import os
 
-There's a catch, and I'll admit I had to be told: most of those pictures are the same stationary car in an almost identical scene. Hundreds of near-copies teach a model very little. What helps is variety: different light, weather, positions, partial views, and the empty pad.
+source_image = "/path/to/www/ring-snapshot/alley-snapshot.jpg"
+destination_dir = "/home/me/training-images/"
+os.makedirs(destination_dir, exist_ok=True)
+target_size = 640
+
+def resize_and_pad(image_path, output_path, size=640):
+    """Resize an image to fit within a square with padding, preserving aspect ratio."""
+    try:
+        img = Image.open(image_path)
+        img.thumbnail((size, size), Image.LANCZOS)
+        padded_img = Image.new("RGB", (size, size), (0, 0, 0))
+        padded_img.paste(img, ((size - img.width) // 2, (size - img.height) // 2))
+        padded_img.save(output_path)
+        print(f"Processed and saved: {output_path}")
+    except Exception as e:
+        print(f"Error processing {image_path}: {e}")
+
+def copy_and_save_sequentially():
+    # Find the highest existing file number and use the next one
+    existing_files = [f for f in os.listdir(destination_dir) if f.endswith(".jpg")]
+    if existing_files:
+        latest_num = max([int(f.split('.')[0]) for f in existing_files])
+        new_num = latest_num + 1
+    else:
+        new_num = 1
+    new_image_path = os.path.join(destination_dir, f"{new_num:04d}.jpg")
+    if os.path.exists(source_image):
+        resize_and_pad(source_image, new_image_path, target_size)
+    else:
+        print(f"No image found at {source_image}")
+
+copy_and_save_sequentially()
+```
+
+I used almost the same function once more to standardize the pictures I had already collected by hand: it loops over a whole folder and writes the 640×640 padded copies into another one.
+
+> **TODO(Jon):** your crontab line, if you'd like it shown (`crontab -l | grep photo-save`), and roughly how many weeks it ran. The numbers in the training-images folder went past 3,800.
+
+One thing I worried about at first was overfitting: a model that has memorized its pictures instead of learning what a car looks like. For a general-purpose model that's a real problem. For mine it turned out to help. The camera never moves, there are only three answers, and the cars park in nearly the same places every time, so a model that knows exactly what *these* cars look like from *this* spot is just what I want. It's a very narrow job, and I wouldn't claim the same thing works for a camera that sees strangers' cars.
+
+Even so, hundreds of near-identical pictures of one parked car don't teach much. Variety (different light, weather, parking positions, and the empty pad) is what helps.
 
 ![The alley in daylight: a dark SUV with bikes on the roof parked on the pad](/img/2026/10/parking-pad-day.jpg)
-*Daytime, with bikes on the roof.*
+*The Mercedes in daylight, with bikes on the roof.*
 
 ![A car parked toward the right edge of the pad at night, the charger cable lying across the ground](/img/2026/10/parking-pad-charging.jpg)
-*Parked to one side at night, charging. It still needs to count as "taken".*
+*The Subaru parked toward one side at night, charging. It still needs to count as "taken".*
 
 ![The empty parking pad at night in infrared](/img/2026/10/parking-pad-empty.jpg)
 *The empty pad. Pictures with no car matter just as much.*
-
-> **TODO(Jon):** add the car name under each picture above (which car is in each one).
 
 ## Step 2: Label Them
 
@@ -67,7 +107,15 @@ The first training set was small:
 | Subaru | 98 |
 | **Total** | **262** |
 
-I named the files after the car (`hyundai-0001.jpg`) so I could keep track of which was which. I also went back and labeled the images a second time after resizing them to 640×640, because the boxes from the original size were no longer in the right place.
+I named the files after the car (`hyundai-0001.jpg`) so I could keep track of which was which. LabelImg also keeps a `classes.txt`, one name per line, and the order is the number each class gets in the label files:
+
+```text
+hyundai
+mercedes
+subaru
+```
+
+A few of my example files are named for how the picture is framed: `hyundai-full-1.jpg`, `hyundai-cropped-1.jpg`, `hyundai-left-1.jpg`, `hyundai-right-1.jpg`. Each is a different view of the same scene: the whole frame, the cropped area, and the left or right half. I also went back and labeled the images a second time after resizing them to 640×640, because the boxes from the original size were no longer in the right place.
 
 > **TODO(Jon):** how long did labeling take? How did you tell the model "this is an empty pad": images with no label file, or something else?
 
@@ -119,15 +167,19 @@ The first full run stopped on its own after about 5 hours. It found its best res
 
 (Precision is how often a "Subaru" call was right. Recall is how many of the real Subarus it found.)
 
-> **TODO(Jon):** the model running today is **not** that first one. Your server has `custom-model.pt` (56.8 MB, Nov 2024), which is the same size as a file named `custom-model-276.pt`, and a smaller 14 MB one named `custom-model-370.pt` that matches the first run. Please tell me what the live one is: a larger YOLOv5 model (medium?), retrained on the thousands of pictures from the cron job? How many pictures, which epoch, and what do 276 and 3168 in the file names mean? These commands on the training machine will answer most of it:
+> **TODO(Jon):** the model running today may **not** be that first one. The server's `custom-model.pt` (56.8 MB, Nov 2024) is the same size as `custom-model-276.pt`, and the 14 MB `custom-model-370.pt` matches the first run (it stopped at epoch 370). These two commands will tell us which file is which. The first one runs on the server and shows which files are byte-for-byte the same:
 >
 > ```bash
-> ls ~/Pictures/codeproject/yolov5/runs/train/
-> grep -H -E "^(weights|epochs|data|batch_size|img_size):" ~/Pictures/codeproject/yolov5/runs/train/*/opt.yaml
-> tail -n 2 ~/Pictures/codeproject/yolov5/runs/train/*/results.csv
+> cd ~/codeproject && md5sum custom-model.pt custom-model-*.pt best.pt
 > ```
 >
-> If you retrained with a separate validation set, I'll replace the caveat above with the real numbers.
+> The second runs on the training machine inside the `yolov5` folder (it prints the epoch, the date, the model size and the class names stored in the file; a depth of 0.33 is the small model, 0.67 medium, 1.0 large). Please run it for `custom-model.pt` and paste the output:
+>
+> ```bash
+> python3 -c "import torch; c=torch.load('/path/to/custom-model.pt', map_location='cpu', weights_only=False); print(c.get('epoch'), c.get('date'), c['model'].yaml.get('depth_multiple'), c['model'].names)"
+> ```
+>
+> Also, how many pictures are in each dataset folder (`dataset/image-collections`, `dataset/multiple-vehicles`, `dataset/car`)? `ls dataset/multiple-vehicles/images/train | wc -l` works for each. If you retrained with a separate validation set, I'll replace the caveat above with real numbers.
 
 ## Step 4: Put the Model in CodeProject.AI
 
@@ -203,7 +255,7 @@ Writing to `stdout` lets the whole thing be one pipe straight into `curl`, with 
 ![The night picture cropped to the lower part of the frame and enlarged to twice its size, so the car fills most of it](/img/2026/10/parking-pad-crop.jpg)
 *What the model actually receives. The distant buildings, bins and the neighbor's car are cut off, and the car is big.*
 
-> **TODO(Jon):** I trained on whole pictures (padded to 640×640) but production sends this crop. Do you remember why the crop works so well? My guess is that it removes the far end of the alley, where other cars are, and makes ours bigger. Is that it, or did you train on crops too?
+> **TODO(Jon):** your example folder has cropped and left/right-half versions as well as whole frames, so I think the model was trained on crops too, which would explain why the crop works so well in production. Is that right? And did the crop also help by hiding the far end of the alley, where other cars sit?
 
 The sensor refreshes in two ways. One is a slow timer every 5 minutes, as a safety net. The faster way is an automation that runs every time a new snapshot arrives: it saves the picture, waits two seconds for the file to finish writing, then tells the sensor to update. So the answer is usually about 30 seconds old at most.
 
