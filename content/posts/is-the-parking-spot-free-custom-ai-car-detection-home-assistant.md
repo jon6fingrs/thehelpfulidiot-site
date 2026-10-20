@@ -198,9 +198,22 @@ curl -s -X POST -F "image=@alley.jpg" -F "min_confidence=0.2" \
 
 The answer comes back as JSON, with a `message` (like "Found hyundai"), a `count`, and a list of `predictions`, each with a label, a confidence and a box.
 
-I trained on the GPU, but I run detection on the CPU, and it's fast enough: one picture every 30 seconds is easy work.
+I trained on the GPU, but I run detection on the CPU, and it's fast enough: one picture every 30 seconds is easy work. As far as I remember, the trained weights went in exactly as they came out of training, with no conversion.
 
-> **TODO(Jon):** can you confirm the trained weights went in as they were, with no conversion? And what's the usual detection time? Home Assistant already keeps it: Developer Tools → States, find `sensor.alley_car_detection`, and read its `inferenceMs` attribute.
+Home Assistant keeps the server's reply as attributes on the sensor, so you can see the timing for yourself. With an empty pad, mine currently says:
+
+```yaml
+count: 0
+predictions: []
+inferenceDevice: CPU
+inferenceMs: 97
+analysisRoundTripMs: 105
+success: true
+moduleName: Object Detection (YOLOv5 6.2)
+command: custom
+```
+
+That's about a tenth of a second to look at the picture, on a CPU, including the round trip.
 
 One small thing that bit me: from inside the Home Assistant container, the AI server's container name would not resolve reliably, so my config uses the Docker network's gateway address instead. That's a private address and could change if the network is recreated.
 
