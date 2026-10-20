@@ -322,7 +322,10 @@ So by the time I turn into the alley, I've heard the answer and I have a picture
 
 The family room tablet also has the alley camera on a page of its own. Its bar shows the car the model identified next to the word "Alley", so a glance at the wall tells us which car is parked there.
 
-> **TODO(Jon):** still missing, and both are optional: (1) the CarPlay or Apple Home tile (a screenshot of the "Alley Garage Door" tile would be great, it's the most surprising part), and (2) the family room tablet's alley view with a car on the pad, so the car name shows. The screenshot you sent of the Wall Tablets page shows live door locks and Lauren's status, so I left it out.
+![The alley camera card from the family room tablet: the night picture with a Subaru on the pad, a badge reading Charging 7.2 kW, 12.4 kWh, 2 h, and a bar reading Subaru, $24 of $61 this month on the left and Alley on the right](/img/2026/10/parking-pad-tablet.jpg)
+*The alley card on the family room tablet. The real dashboard code, but running against a fake Home Assistant: the charging numbers and costs are made up, and the picture is one of the snapshots above.*
+
+> **TODO(Jon):** still missing, and optional: a screenshot of the "Alley Garage Door" tile in CarPlay or Apple Home. It's the most surprising part of the setup. Blur anything private.
 
 ## Step 8: Keep the Camera Honest
 
