@@ -9,8 +9,6 @@ category = ["Smart Home"]
 tag = ["home assistant", "claude", "dashboard"]
 +++
 
-> **DRAFT: not ready to merge.** Every `TODO(Jon)` note below is a question only the owner can answer. Delete this box and every TODO before publishing.
-
 Almost everything that changed on my wall tablets since the last post happened on one of them: the Fire HD 10 in the family room. It's the tablet everyone walks past, so it's the one that has to be right at a glance.
 
 The idea behind all of it is simple. **A tablet on the wall should show what matters right now, and everything else should be one swipe away.** The catch is that it also must never make it easy to do something by accident, like unlocking a door with a stray swipe.
@@ -108,9 +106,28 @@ One detail worth knowing: if you change a setpoint and it hasn't been sent yet w
 
 Both are mostly automatic anyway. The attic cools to a set temperature when someone is up there and relaxes when it's empty, and the basement heats while someone is down there and turns off a while after they leave. So the dial is mostly for looking, and for the times you want to override.
 
-## The Alley Card, Revisited
+## The Alley Card, and What Each Car Costs
 
-You can see the alley camera in the corner of the full-page picture above. Its bar names the car the model sees, along with what charging that car has cost this month, and a small badge shows what the charger is doing. All of that comes from the AI that watches the parking pad, which I wrote up in [its own post](/is-the-parking-spot-free-custom-ai-car-detection-home-assistant).
+You can see the alley camera in the corner of the full-page picture above. Its bar names the car the AI sees on the parking pad, and a small badge shows what the charger is doing. (How I trained that model and got it running in CodeProject.AI is in [its own post](/is-the-parking-spot-free-custom-ai-car-detection-home-assistant).)
+
+The newest thing in that bar is a number: **what charging that car has cost this month, out of everything charged this month.** Here it is for each of my three cars, on the days each one is in the alley:
+
+![Three alley camera bars: Mercedes, $28 of $61 this month; Hyundai, $9.50 of $61 this month; Subaru, $24 of $61 this month](/img/2026/10/dash3-car-costs.jpg)
+*Each car's share of the month. All the numbers are made up. (Under $10 it shows cents.)*
+
+It only shows a cost once that car has charged this month. Until then, it's just the car's name, like before.
+
+### Where the Numbers Come From
+
+This is why it matters that the model can tell my cars apart. Here's the whole chain:
+
+- **The charger reports energy.** The charger says how much energy each charging session has used. A sensor adds up how much that number grew, so a new session starts counting from zero.
+- **Each bit of energy is priced when it's used.** The price is my electric utility's own rate for the current bill (from the utility's integration in Home Assistant), once there's enough usage to trust it. Before that it falls back to a fixed default, and I can type in an exact price if I ever want to. Because it's priced at the moment, a price change never rewrites the past.
+- **The camera picks the car.** When the charger gets plugged in, an automation looks at which car the parking pad AI is most confident about, and points a set of monthly meters at that car for the whole session. There are meters for each of the three cars, plus an "other" for anything else, and a total.
+- **A wrong guess is fixable.** If it ever picks the wrong car, I can pick the right one in a selector, and the other selector follows.
+- **A report on the 1st.** On the first of each month, Home Assistant emails a summary of last month's energy and cost for each car.
+
+None of this needed anyone to do anything new. The car gets plugged in like always, and the meters follow.
 
 ## Smaller Things
 
@@ -119,19 +136,15 @@ You can see the alley camera in the corner of the full-page picture above. Its b
 
 ## About Those Screenshots (Once More)
 
-The fake Home Assistant got a few more tricks for this post. It has a fake clock, so everything reads 8:40 PM, and fake people with made-up names and locations. The map tiles are real OpenStreetMap, with pins dropped in a random spot. The alley picture is one of my own snapshots from the parking pad post. The charger numbers and costs are invented.
+The fake Home Assistant got a few more tricks for this post. It has a fake clock, so everything reads 8:40 PM, and fake people with made-up names and locations. The map tiles are real OpenStreetMap, with pins dropped in a random spot. The alley pictures are my own snapshots from the parking pad post, with a person blurred out. The charger numbers and costs are invented.
 
 The swipes in the screenshots are simulated touches. It's the same events a finger would send, so the real swipe code runs, but it isn't a recording of anyone's hand.
-
-> **TODO(Jon):** do you want me to mention the admin-only Infrastructure page (the lab as a tree, in the Home Assistant sidebar)? It isn't a tablet page, so I left it out. If yes, I'd need a version with fake data, since its map is full of real hostnames and addresses.
 
 ## How It Went
 
 The rule I gave Claude in the first post still holds: every way a person already uses the house must keep working, and changes may only add something to learn. Everything here is optional. You can ignore the dots, never swipe, and the tablet still does what it always did. The lock row is still there, one tap under the banner.
 
 The change I'm happiest with is the one that removed alerts. A banner that goes off all the time is worse than no banner.
-
-> **TODO(Jon):** I wrote the motivations (the car hidden at night, the door alerts being noise) from your commit messages. Is that how it happened? And is there anything from using it in real life that I should add, like a time the banner actually caught something?
 
 If you want the details on any of these cards, let me know in the comments.
 
