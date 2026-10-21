@@ -170,7 +170,7 @@ A few details make it pleasant to use:
 
 ## Smaller Things
 
-- **The family room's alley camera names the car.** During the day, the family room tablet shows the alley camera where we park. My parking-spot AI already knows which of our cars is there, so the picture's label now says which car it is.
+- **The family room's alley camera names the car.** During the day, the family room tablet shows the alley camera where we park. My [parking-spot AI](/is-the-parking-spot-free-custom-ai-car-detection-home-assistant) already knows which of our cars is there, so the picture's label now says which car it is.
 - **The StarView's screen brightness follows the room lights.** It used to sit at the very bottom with the lights at full. Now it follows the lights, but never goes so dim that you can't see the remote during a movie.
 
 ## About Those Screenshots (Again)
