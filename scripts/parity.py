@@ -76,9 +76,11 @@ def norm_cc(values):
     return ", ".join(sorted({d.strip() for v in values for d in v.split(",") if d.strip()}))
 
 
-def norm_html(data, origin):
+def norm_html(data, *origins):
+    """Both sides get every origin stripped: before cutover the Pages copy
+    may be built with either its own base URL or the real one."""
     text = data.decode("utf-8", "replace")
-    for o in {origin, origin.replace("https://", "http://")}:
+    for o in sorted({x for origin in origins for x in (origin, origin.replace("https://", "http://"))}, key=len, reverse=True):
         text = text.replace(o + "/", "/").replace(o, "/")
     return text
 
@@ -132,7 +134,7 @@ def main():
             if so != sn:
                 diff("page status", p, so, sn)
                 continue
-            to, tn = norm_html(bo, old), norm_html(bn, new)
+            to, tn = norm_html(bo, old, new), norm_html(bn, old, new)
             if to != tn:
                 at = next((i for i, (x, y) in enumerate(zip(to, tn)) if x != y), min(len(to), len(tn)))
                 diff("page html", p, to[max(0, at - 40):at + 60], tn[max(0, at - 40):at + 60])
@@ -152,7 +154,7 @@ def main():
         for p, so, sn, ho, hn, bo, bn in ex.map(asset, sorted(assets)):
             if so != sn:
                 diff("asset status", p, so, sn)
-            elif re.search(r"\.(xml|json|txt|xsl)$", p) and norm_html(bo, old) == norm_html(bn, new):
+            elif re.search(r"\.(xml|json|txt|xsl)$", p) and norm_html(bo, old, new) == norm_html(bn, old, new):
                 pass        # feeds and the search index embed the base URL
             elif hashlib.sha256(bo).digest() != hashlib.sha256(bn).digest():
                 same = pixels_equal(bo, bn)
