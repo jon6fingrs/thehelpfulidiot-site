@@ -1,0 +1,15 @@
+# Cloudflare Pages project. GitHub Actions deploys it (.github/workflows/ci.yml);
+# see README.md, "Cloudflare Pages".
+name = "thehelpfulidiot"
+pages_build_output_dir = "public"
+compatibility_date = "2026-09-01"
+
+[vars]
+# Self-hosted Plausible that /js/vx.js, /vx/event and /api/event forward to.
+PLAUSIBLE_HOST = "plausible.katz.vision"
+# The script the live site served via Traefik, which records under the
+# Plausible site "thehelpfulidiot.com" (it sends no data-domain; Plausible
+# takes the page's hostname). nginx.conf's pa-qABR6KJoWATtykha8ioim.js is
+# hard-wired to the old staging site "zola.thehelpfulidiot.com": don't use it.
+# This script posts to /api/event on this origin.
+PLAUSIBLE_SCRIPT = "/js/script.outbound-links.js"

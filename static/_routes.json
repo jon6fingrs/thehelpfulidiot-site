@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "description": "Paths that run functions/. Everything else is served from the build without invoking a Function. Keep in step with functions/_lib/wordpress.js (tests/routes.test.js checks).",
+  "include": [
+    "/js/vx.js", "/vx/event", "/api/event",
+    "/comments/feed", "/comments/feed/", "/sample-page", "/sample-page/",
+    "/wp-login.php", "/xmlrpc.php", "/wp-cron.php", "/wp-config.php", "/wp-config-sample.php",
+    "/readme.html", "/license.txt", "/wp-content/debug.log",
+    "/wp-admin*", "/wp-includes*", "/wp-json*",
+    "/wp-content/plugins/*", "/wp-content/themes/*",
+    "/*/feed", "/*/feed/",
+    "/wp-sitemap*",
+    "/1*", "/2*"
+  ],
+  "exclude": []
+}

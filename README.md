@@ -114,6 +114,50 @@ zola serve                          # local preview, includes drafts
 both the `zola-build` and `nginx` containers; never mount a volume at
 `public/` itself.
 
+## Cloudflare Pages (replacing the home server)
+
+The site is moving from nginx on `net-server` to the Cloudflare Pages project
+`thehelpfulidiot`. Until cutover the home server stays the live site.
+
+Every push to `main` whose CI is green is deployed by the `deploy` job in
+`.github/workflows/ci.yml`; a red check never deploys. nginx's jobs move to:
+
+    static/_redirects            plain 301s: /feed, /rss, /feed/atom, /author/, /category/uncategorized
+    functions/_lib/wordpress.js  410s and regex rules: wp-* endpoints, /<slug>/feed/,
+                                 date archives, /wp-sitemap*.xml, /sample-page
+    functions/js/vx.js.js,       first-party Plausible proxy (host and script in wrangler.toml)
+      vx/event.js, api/event.js
+    static/_headers              cache headers, .stl/.h/.xml types, security headers
+                                 (were Traefik's), noindex on *.pages.dev
+    static/_routes.json          the only paths that run a Function; everything else
+                                 is served straight from the build
+
+`node --test tests/*.test.mjs` checks the rules against nginx's behaviour and
+that `_routes.json` matches them. Keep the two in step.
+
+### One-time setup
+
+1. **API token.** Cloudflare → My Profile → API Tokens → Create Token → Custom
+   token. Permission: Account → **Cloudflare Pages → Edit**; account resources:
+   your account. (The `jonathankatzmd-deploy` token works too.)
+2. **GitHub secrets.** This repo → Settings → Secrets and variables → Actions →
+   New repository secret: `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+   Until both exist, CI skips the deploy.
+3. **GitHub variable.** Variables tab of the same page: `SITE_BASE_URL` = `/`,
+   so links on `thehelpfulidiot.pages.dev` stay on it. Delete it at cutover.
+
+### Parity check
+
+    python3 scripts/parity.py https://thehelpfulidiot.com https://thehelpfulidiot.pages.dev
+
+compares every sitemap URL, every asset, the nginx rules and old WordPress
+URLs. After cutover, `--old-ip 150.136.59.49` reaches the old server directly.
+
+### Local test
+
+    zola build --base-url /
+    npx wrangler@4.156.0 pages dev
+
 ## Deployment notes
 
 - nginx config lives outside the repo (`nginx.conf`, gitignored). It handles

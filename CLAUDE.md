@@ -14,6 +14,7 @@ file is what an agent needs to avoid breaking things.
 zola build                                # → public/ (gitignored)
 zola check --skip-external-links          # internal link check; the "linter"
 python3 scripts/check-site.py public      # content + CSP checks; the "tests"
+node --test tests/*.test.mjs              # Cloudflare rules vs nginx, _routes.json
 zola serve                                # preview incl. drafts
 ```
 
@@ -23,6 +24,11 @@ hook downloads the GitHub release.
 
 ## How it is deployed
 
+- **Moving to Cloudflare Pages** (README, "Cloudflare Pages"): CI deploys
+  `main` to project `thehelpfulidiot`. `static/_redirects`, `static/_headers`,
+  `static/_routes.json` and `functions/` replace nginx.conf. Functions only run
+  on paths listed in `_routes.json`; add a path there whenever a Function
+  needs it. Until cutover the home server below is still live.
 - **Production:** nginx container on the owner's home server (`net-server`),
   behind Traefik. The owner runs `git pull` + rebuilds there by hand. Merging
   to `main` does NOT update the live site by itself; say so when relevant.
