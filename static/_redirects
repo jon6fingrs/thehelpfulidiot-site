@@ -1,0 +1,20 @@
+# Cloudflare Pages redirects (copied into public/ by zola build). These are
+# nginx's plain path-to-path 301s; anything with a regex or a 410 is in
+# functions/_lib/wordpress.js. Pages matches /x and /x/ separately, so both
+# are listed.
+
+# Feeds. WordPress's /feed/ was RSS 2.0, so it goes to rss.xml.
+/feed           /rss.xml    301
+/feed/          /rss.xml    301
+/rss            /rss.xml    301
+/rss/           /rss.xml    301
+/feed/atom      /atom.xml   301
+/feed/atom/     /atom.xml   301
+
+# Single-author site; author archives have no equivalent.
+/author/*       /           301
+
+# No post uses "Uncategorized"; delete these if one ever does, or they
+# would shadow the page Zola generates.
+/category/uncategorized     /archive/   301
+/category/uncategorized/    /archive/   301
