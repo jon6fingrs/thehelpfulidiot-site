@@ -1,6 +1,6 @@
 +++
 title = "Goodbye AdGuard Home: Five VLANs, One Technitium DNS Cluster"
-date = 2026-11-01
+date = 2026-11-01T09:00:00
 path = "goodbye-adguard-home-technitium-dns-cluster"
 description = "Replacing five AdGuard Home instances with two clustered Technitium DNS servers: one DHCP server for every VLAN, separate blocking policies per network, and a few things that didn't work the first time."
 

@@ -1,6 +1,6 @@
 +++
 title = "Making Technitium DNS Survive a Proxmox Host Failure"
-date = 2026-11-02
+date = 2026-11-01T10:00:00
 path = "technitium-dns-proxmox-ha"
 description = "Adding ZFS replication and Proxmox HA to a two-container Technitium DNS setup, the order of operations that tripped me up, a real migration test, and Uptime Kuma monitoring."
 
