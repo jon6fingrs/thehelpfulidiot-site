@@ -45,10 +45,11 @@ into `~/.local/bin`; the hook downloads the GitHub release.
   tell the owner to `git pull` or rebuild anything on the server.
 - **Cloudflare gotchas.** Pages matches `/x` and `/x/` separately, so list
   both in `_redirects`. No path may match two `Cache-Control` rules in
-  `_headers` (Pages joins the values). The repo variable `SITE_BASE_URL`
-  overrides `base_url` at build time; it was a pre-cutover workaround and
-  should be unset, so if links on the live site point at `/` or
-  `*.pages.dev`, check it. `*.pages.dev` copies are noindex'd on purpose.
+  `_headers` (Pages joins the values). CI still honours an optional repo
+  variable `SITE_BASE_URL` that overrides `base_url`, but it is deliberately
+  unset now (it was a pre-cutover workaround); leave it unset or the live
+  site's links will point at the wrong place. `*.pages.dev` copies are
+  noindex'd on purpose.
 - **Preview:** `.github/workflows/preview.yml` publishes to
   https://jon6fingrs.github.io/thehelpfulidiot-site/ on every push to `main`
   or `claude/**`. Pages serves from a subfolder, so

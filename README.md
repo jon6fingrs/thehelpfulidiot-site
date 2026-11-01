@@ -143,9 +143,9 @@ that `_routes.json` matches them. Keep the two in step.
 2. **GitHub secrets.** This repo → Settings → Secrets and variables → Actions →
    New repository secret: `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
    Until both exist, CI skips the deploy.
-3. **GitHub variable.** Variables tab of the same page: `SITE_BASE_URL` = `/`,
-   so links on `thehelpfulidiot.pages.dev` stay on it. That was for before
-   cutover: delete it now that the real domain serves the site.
+3. **GitHub variable (not needed now).** Before cutover, `SITE_BASE_URL` = `/`
+   kept links on `thehelpfulidiot.pages.dev`. It has been deleted; leave it
+   unset so the live site builds with `base_url` from `config.toml`.
 
 ### Parity check
 
