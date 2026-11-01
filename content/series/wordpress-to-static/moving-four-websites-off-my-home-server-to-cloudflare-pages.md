@@ -9,7 +9,7 @@ category = ["Self Hosting"]
 tag = ["home lab", "cloudflare", "zola", "github actions", "claude"]
 +++
 
-A few weeks ago I [moved this blog from WordPress to Zola](/goodbye-wordpress-hello-zola). That made the site a pile of static files, which raised an uncomfortable question: why was I still serving a pile of static files from a server in my house?
+A few weeks ago I [moved this blog from WordPress to Zola](/goodbye-wordpress-hello-zola). That made the site a pile of static files, which raised an uncomfortable question: why was I still serving a pile of static files from a server in my house? A WordPress site needs a real server with PHP and a database, so it's hard to find a free home for one. A static site can live almost anywhere.
 
 This is the story of how I moved four websites off my home server and onto Cloudflare Pages. This blog, my personal site, and two small calculators. I ended up using two different deployment strategies, I broke a few things in instructive ways, and I'm now running all four without a single container of my own.
 
@@ -25,13 +25,23 @@ The four sites were:
 | My personal site | Zola, with a contact form and a few interactive tools | Same, plus a small container for the form |
 | Two ophtho calculators | A single `index.html` each | Copied into an nginx container |
 
-It worked, mostly. But "mostly" is the problem with serving real websites from a residential connection through a free VPS. When something went wrong it was never obvious which of the hops was at fault, and I was always the one on call.
+![The old setup: a visitor's request goes from Cloudflare DNS to the Oracle VPS, through a WireGuard tunnel to my house, then through OPNsense and Traefik to nginx containers](/img/2026/11/home-server-before.png)
+*The old path, one hop after another*
+
+It worked, mostly. But "mostly" is the problem. The connection was often unstable, and a page would sometimes need several reloads before it showed up. It got worse when more than one person was visiting at the same time. When something went wrong it was never obvious which of the hops was at fault, and I was always the one on call.
 
 ## Why Cloudflare
 
 This part was easy. All of my DNS already lives in Cloudflare. The domains were there, the records were there, and the only thing that decided whether anyone could see my sites was where those records pointed. Cloudflare Pages is a free static host, and since it's the same company that already answers for my DNS, moving a site over is mostly a matter of pointing the name somewhere else.
 
 The tradeoff is that I'm trading "I run it all" for "someone else runs it". For static sites that's a trade I'll happily make. If my house loses power, the websites don't care anymore.
+
+## The new setup
+
+Here's the whole thing after the move. Everything on the bottom row is Cloudflare's problem now.
+
+![The new setup: I push to GitHub; GitHub Actions builds and deploys the Zola sites, while Cloudflare watches the repo for the two plain HTML sites; all four are served by Cloudflare Pages](/img/2026/11/cloudflare-after.png)
+*The new path*
 
 ## Two ways to get a site onto Pages
 
