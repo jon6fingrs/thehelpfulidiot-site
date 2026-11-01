@@ -1,7 +1,7 @@
 # Builds the site and publishes it to GitHub Pages as a PREVIEW:
 #   https://jon6fingrs.github.io/thehelpfulidiot-site/
 #
-# Production is still the nginx container on net-server; this does not touch
+# Production is Cloudflare Pages (deployed by ci.yml); this does not touch
 # it. The preview is noindex'd and has analytics stripped (see
 # .github/scripts/preview-fixup.py).
 #
