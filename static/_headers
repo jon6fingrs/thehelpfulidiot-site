@@ -63,6 +63,13 @@ https://:version.:project.pages.dev/*
 /sitemap.xml
   Cache-Control: public, max-age=3600
 
+# The giscus comment themes are loaded by the giscus.app iframe, and the font
+# they use with them; cross-origin font and theme loads need CORS.
+/giscus/*
+  Access-Control-Allow-Origin: https://giscus.app
+/fonts/Inter4.woff2
+  Access-Control-Allow-Origin: https://giscus.app
+
 # nginx had these in its own types{} block.
 /*.stl
   Content-Type: model/stl

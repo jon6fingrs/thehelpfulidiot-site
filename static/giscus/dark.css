@@ -1,0 +1,40 @@
+/* giscus theme for the dark site theme. See light.css for how it is loaded
+   and why color-scheme is pinned. Starts from giscus's noborder_dark and
+   swaps in tabi's dark teal skin, backgrounds and font. */
+@import url("https://giscus.app/themes/noborder_dark.css");
+
+@font-face {
+    font-family: "Inter";
+    font-display: swap;
+    src: url("../fonts/Inter4.woff2") format("woff2");
+}
+
+:root { color-scheme: dark; }
+
+main {
+    font-family: Inter, Helvetica, Arial, sans-serif;
+
+    --primary-default: 145, 224, 238;         /* tabi dark teal #91e0ee */
+    --bg-default: 23, 23, 23;                 /* tabi --bg-2 #171717 */
+
+    --color-fg-default: #d4d4d4;              /* tabi --text-color */
+    --color-fg-muted: #b0b0b0;                /* tabi --meta-color */
+    --color-fg-subtle: #b0b0b0;
+    --color-canvas-default: #1f1f1f;          /* tabi --background-color */
+    --color-canvas-overlay: #1f1f1f;
+    --color-scale-gray-7: #2f2f2f;            /* reaction hover, tabi --bg-0 */
+
+    /* Light cyan text on a dark button, like the site's own links; white on
+       #91e0ee would be unreadable. */
+    --color-btn-primary-text: #91e0ee;
+    --color-btn-primary-bg: #0e3a42;
+    --color-btn-primary-border: rgba(var(--primary-default), 0.6);
+    --color-btn-primary-hover-bg: #14505b;
+    --color-btn-primary-hover-border: rgba(var(--primary-default), 0.9);
+    --color-btn-primary-selected-bg: #14505b;
+    --color-btn-primary-disabled-text: rgba(145, 224, 238, 0.6);
+    --color-btn-primary-disabled-bg: #0e3a42;
+    --color-btn-primary-disabled-border: rgba(var(--primary-default), 0.3);
+    --color-accent-fg: rgba(var(--primary-default), 1);
+    --color-accent-emphasis: rgba(var(--primary-default), 1);
+}

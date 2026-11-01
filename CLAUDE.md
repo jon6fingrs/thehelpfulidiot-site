@@ -69,6 +69,10 @@ into `~/.local/bin`; the hook downloads the GitHub release.
    - `[markdown.highlighting] style` must stay `"class"`. `"inline"` emits
      `style=` on every token and the CSP silently strips all code colours.
    - New third-party embeds need their domain in `extra.allowed_domains`.
+   - giscus comments use the site's own themes in `static/giscus/`, which pin
+     `color-scheme` inside the iframe. giscus's stock themes follow the
+     phone's light/dark setting instead of the site's, which painted a
+     white or black block behind the comments when the two differed.
 2. **Taxonomies are singular** (`category`, `tag`) so URLs match WordPress
    (`/category/<slug>/`, `/tag/<slug>/`). Upstream tabi expects `tags`, which
    is why `templates/page.html` and `templates/components/list_posts.html`
@@ -101,6 +105,7 @@ into `~/.local/bin`; the hook downloads the GitHub release.
 | `templates/partials/nav.html` | tabi nav | logo, one-line phone header, `<details>` menu |
 | `templates/partials/home_banner.html` | tabi banner | tagline as h1; site name not repeated |
 | `templates/partials/analytics.html` | tabi analytics | first-party Plausible paths (`vxinit.js`, `vx.js`) |
+| `static/js/giscus.min.js` | tabi `js/giscus.min.js` | resolves `static/giscus/*.css` theme URLs; re-sends theme once comments load |
 | `templates/series_index.html` | new | `/series` lists series sections automatically |
 | `static/custom.css` | — | all site CSS, sectioned with comments |
 

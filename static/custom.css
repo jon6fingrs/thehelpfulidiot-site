@@ -155,3 +155,13 @@ article figure { margin-inline: 0; }
     .bloglist-content div .description p { margin: 0.3rem 0 0.4rem; line-height: 1.45; }
     .bloglist-content .readmore { font-size: 0.9rem; }
 }
+
+/* ------------------------------------------------------------ Comments
+   giscus injects https://giscus.app/default.css for its iframe; the CSP
+   (style-src 'self') blocks it, so its rules live here. color-scheme must
+   match the one static/giscus/*.css pins inside the iframe, or the browser
+   paints an opaque white/black backdrop behind the comments. */
+.giscus, .giscus-frame { width: 100%; min-height: 150px; }
+.giscus-frame { border: none; color-scheme: light; }
+.giscus-frame--loading { opacity: 0; }
+[data-theme='dark'] .giscus-frame { color-scheme: dark; }
