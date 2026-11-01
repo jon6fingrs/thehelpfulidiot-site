@@ -18,32 +18,48 @@ node --test tests/*.test.mjs              # Cloudflare rules vs nginx, _routes.j
 zola serve                                # preview incl. drafts
 ```
 
-Run all three before every push. In cloud sessions, `.claude/hooks/session-start.sh`
-installs Zola into `~/.local/bin`. Zola has no package manager entry here; the
-hook downloads the GitHub release.
+Run all three before every push: CI runs the same ones and blocks the deploy
+on failure. In cloud sessions, `.claude/hooks/session-start.sh` installs Zola
+into `~/.local/bin`; the hook downloads the GitHub release.
 
 ## How it is deployed
 
-- **Moving to Cloudflare Pages** (README, "Cloudflare Pages"): CI deploys
-  `main` to project `thehelpfulidiot`. `static/_redirects`, `static/_headers`,
-  `static/_routes.json` and `functions/` replace nginx.conf. Functions only run
-  on paths listed in `_routes.json`; add a path there whenever a Function
-  needs it. Until cutover the home server below is still live.
-- **Production:** nginx container on the owner's home server (`net-server`),
-  behind Traefik. The owner runs `git pull` + rebuilds there by hand. Merging
-  to `main` does NOT update the live site by itself; say so when relevant.
-- **`nginx.conf` is not in the repo** (gitignored: internal hostnames). It
-  handles WordPress leftovers: `/feed/` → `/rss.xml`, 410 for `wp-*` and
-  per-post `/feed/`, date archives → `/archive/`, first-party Plausible proxy
-  at `/js/vx.js` + `/vx/event`, and caching (CSS/JS immutable only when the URL
-  has Zola's `?h=` hash). If a change needs nginx edits, give the owner the
-  snippet; you cannot apply it.
+- **Production is Cloudflare Pages** (project `thehelpfulidiot`), serving
+  https://thehelpfulidiot.com. **Merging to `main` deploys the site**, with no
+  manual step on any server. `.github/workflows/ci.yml` builds with Zola, runs
+  the link check, `check-site.py` and the node tests, and only if all pass does
+  its `deploy` job run `wrangler pages deploy` using the repo secrets
+  `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. A red check never
+  deploys, and CI skips the deploy (green) if those secrets are missing. Treat
+  a merge as publishing: nothing is staged after it.
+- `static/_redirects`, `static/_headers`, `static/_routes.json` and
+  `functions/` do what nginx.conf and Traefik used to (WordPress redirects and
+  410s, cache and security headers, the first-party Plausible proxy). Functions
+  only run on paths listed in `_routes.json`; add a path there whenever a
+  Function needs it. `tests/*.test.mjs` keeps the rules and `_routes.json` in
+  step. `wrangler.toml` holds the Pages config (Plausible host and script).
+- **Old home server (`net-server`, nginx behind Traefik)** was the previous
+  host and is no longer authoritative. `nginx.conf` was never in the repo
+  (gitignored: internal hostnames) and nothing needs an nginx edit any more;
+  put new redirects in `_redirects` or `functions/_lib/wordpress.js`. Don't
+  tell the owner to `git pull` or rebuild anything on the server.
+- **Cloudflare gotchas.** Pages matches `/x` and `/x/` separately, so list
+  both in `_redirects`. No path may match two `Cache-Control` rules in
+  `_headers` (Pages joins the values). CI still honours an optional repo
+  variable `SITE_BASE_URL` that overrides `base_url`, but it is deliberately
+  unset now (it was a pre-cutover workaround); leave it unset or the live
+  site's links will point at the wrong place. `*.pages.dev` copies are
+  noindex'd on purpose.
 - **Preview:** `.github/workflows/preview.yml` publishes to
   https://jon6fingrs.github.io/thehelpfulidiot-site/ on every push to `main`
   or `claude/**`. Pages serves from a subfolder, so
   `.github/scripts/preview-fixup.py` prefixes root-relative links, adds
   `noindex`, and strips analytics. Use it to let the owner check changes on
-  a phone before merging. Giscus comments on the preview are the REAL ones.
+  a phone **before** merging. Giscus comments on the preview are the REAL ones.
+- **Verifying a deploy:** after a merge, watch the CI run's `deploy` job, then
+  `curl -sI https://thehelpfulidiot.com/<path>` (a `cf-ray`/Cloudflare header
+  and a 308 to the trailing slash are normal). `python3 scripts/parity.py`
+  compares the live site against another origin.
 
 ## Hard constraints (each of these broke once)
 
@@ -126,13 +142,13 @@ There is no test suite for layout. What has worked:
    `playwright` npm package in a scratch dir, never `playwright install`).
    Check every URL in `public/sitemap.xml` in light and dark for console
    errors and failed requests; the only expected failure is `/js/vx.js`
-   (exists only behind nginx).
+   (now served by a Cloudflare Function, so it fails on local previews).
 3. Screenshot at 390×844 with `deviceScaleFactor: 2` for phone layout, and
    1280 wide for desktop. The owner mostly reviews on an iPhone.
 
 ## Working with the owner
 
-- Not a developer by trade; explain outcomes plainly, give copy-paste
-  commands for anything on their server, and keep nginx edits as full files
-  or clearly marked snippets.
-- Changes go through a branch + PR + preview; merge only when asked.
+- Not a developer by trade; explain outcomes plainly and give copy-paste
+  commands for anything they must run themselves.
+- Changes go through a branch + PR + preview; merge only when asked. A merge
+  goes live on the real site within minutes, so say so when you offer to merge.

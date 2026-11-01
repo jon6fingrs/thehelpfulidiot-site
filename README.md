@@ -19,8 +19,8 @@ The config is set up so nothing you have published changes address:
 | `/page/2` | `/page/2` | `paginate_by = 10` on `content/_index.md` |
 | `/category/<slug>/` | same | taxonomy named `category`, singular, on purpose |
 | `/tag/<slug>/` | same | taxonomy named `tag`, singular |
-| `/feed/` | `/rss.xml` (and `/atom.xml`) | nginx 301 |
-| `/author/jonkatz/` | — | nginx 301 to `/` |
+| `/feed/` | `/rss.xml` (and `/atom.xml`) | Cloudflare 301 |
+| `/author/jonkatz/` | — | Cloudflare 301 to `/` |
 
 ## Layout
 
@@ -111,16 +111,16 @@ zola serve                          # local preview, includes drafts
 ```
 
 `zola build` deletes and recreates `public/`. Mount the whole project into
-both the `zola-build` and `nginx` containers; never mount a volume at
-`public/` itself.
+a container that builds it; never mount a volume at `public/` itself.
 
-## Cloudflare Pages (replacing the home server)
+## Cloudflare Pages (production)
 
-The site is moving from nginx on `net-server` to the Cloudflare Pages project
-`thehelpfulidiot`. Until cutover the home server stays the live site.
+The site is hosted on the Cloudflare Pages project `thehelpfulidiot`
+(previously nginx on `net-server`, now retired as the live host).
 
 Every push to `main` whose CI is green is deployed by the `deploy` job in
-`.github/workflows/ci.yml`; a red check never deploys. nginx's jobs move to:
+`.github/workflows/ci.yml`; a red check never deploys. Merging to `main`
+therefore publishes the site. nginx's old jobs now live in:
 
     static/_redirects            plain 301s: /feed, /rss, /feed/atom, /author/, /category/uncategorized
     functions/_lib/wordpress.js  410s and regex rules: wp-* endpoints, /<slug>/feed/,
@@ -143,15 +143,17 @@ that `_routes.json` matches them. Keep the two in step.
 2. **GitHub secrets.** This repo → Settings → Secrets and variables → Actions →
    New repository secret: `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
    Until both exist, CI skips the deploy.
-3. **GitHub variable.** Variables tab of the same page: `SITE_BASE_URL` = `/`,
-   so links on `thehelpfulidiot.pages.dev` stay on it. Delete it at cutover.
+3. **GitHub variable (not needed now).** Before cutover, `SITE_BASE_URL` = `/`
+   kept links on `thehelpfulidiot.pages.dev`. It has been deleted; leave it
+   unset so the live site builds with `base_url` from `config.toml`.
 
 ### Parity check
 
     python3 scripts/parity.py https://thehelpfulidiot.com https://thehelpfulidiot.pages.dev
 
 compares every sitemap URL, every asset, the nginx rules and old WordPress
-URLs. After cutover, `--old-ip 150.136.59.49` reaches the old server directly.
+URLs. `--old-ip 150.136.59.49` reaches the old server directly, if it
+is still running.
 
 ### Local test
 
@@ -160,8 +162,8 @@ URLs. After cutover, `--old-ip 150.136.59.49` reaches the old server directly.
 
 ## Deployment notes
 
-- nginx config lives outside the repo (`nginx.conf`, gitignored). It handles
-  the WordPress leftovers: `/feed/` → `/rss.xml`, 410s for `wp-*` endpoints
+- The old nginx config lived outside the repo (`nginx.conf`, gitignored); its
+  WordPress leftovers are now handled by Cloudflare rules and Functions: `/feed/` → `/rss.xml`, 410s for `wp-*` endpoints
   and per-post comment feeds, date archives → `/archive/`, and the
   first-party Plausible proxy (`/js/vx.js`, `/vx/event`).
 - **Syntax highlighting must stay `style = "class"`** in config.toml. tabi's
@@ -179,7 +181,7 @@ URLs. After cutover, `--old-ip 150.136.59.49` reaches the old server directly.
 `.github/workflows/preview.yml` publishes a preview to
 <https://jon6fingrs.github.io/thehelpfulidiot-site/> on every push to `main`
 or a `claude/*` branch (or on demand from the Actions tab). It is noindex'd
-and has analytics stripped; production is unaffected. Because Pages serves
+and has analytics stripped; production (Cloudflare Pages) is unaffected. Because Pages serves
 from a subfolder, `.github/scripts/preview-fixup.py` prefixes the root-relative
 links in post content. One-time setup is described at the top of the
 workflow file.
@@ -188,7 +190,7 @@ workflow file.
 
 - **Duplicate terms.** `self-hosting` and `smart-home` exist as both a category
   and a tag. Both tag archives were in the WordPress sitemap, so removing the
-  tags would 404 indexed URLs. Leave them, or add nginx redirects first.
+  tags would 404 indexed URLs. Leave them, or add redirects in `static/_redirects` first.
 - **Bulk `updated` dates.** Most posts carry `updated = 2024-04-15` or
   `2024-04-09` from a WordPress bulk save, not real edits. The listing now
   shows only the original date (`post_listing_date = "date"`); post pages
