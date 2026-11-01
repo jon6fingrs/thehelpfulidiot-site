@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="690" viewBox="0 0 1200 690" role="img" aria-label="Diagram of two Technitium DNS containers across Proxmox hosts, VLAN clients, shared blocklists, and ZFS replication">
+<rect width="1200" height="690" rx="24" fill="#f5f7fa"/>
+<style>text{font-family:DejaVu Sans,Arial,sans-serif;fill:#1c2938}.title{font-size:31px;font-weight:700}.sub{font-size:17px;fill:#627084}.host{font-size:24px;font-weight:700}.body{font-size:19px}.small{font-size:16px;fill:#516173}.label{font-size:18px;font-weight:700} .arrow{stroke:#536b86;stroke-width:4;fill:none;stroke-linecap:round;stroke-linejoin:round}</style>
+<text x="50" y="58" class="title">Five VLANs. Two DNS servers. One DHCP server.</text>
+<text x="50" y="90" class="sub">Technitium DNS cluster + Proxmox HA + ZFS replication</text>
+<rect x="50" y="135" width="500" height="265" rx="20" fill="#ffffff" stroke="#a9b9cd" stroke-width="2"/>
+<rect x="650" y="135" width="500" height="265" rx="20" fill="#ffffff" stroke="#a9b9cd" stroke-width="2"/>
+<rect x="50" y="135" width="500" height="61" rx="20" fill="#dceafd"/><rect x="50" y="175" width="500" height="21" fill="#dceafd"/>
+<rect x="650" y="135" width="500" height="61" rx="20" fill="#e2f2e9"/><rect x="650" y="175" width="500" height="21" fill="#e2f2e9"/>
+<text x="78" y="175" class="host">BEAST</text><text x="679" y="175" class="host">pve-attic-backup</text>
+<text x="78" y="229" class="label">CT 701 · Technitium Primary</text><text x="679" y="229" class="label">CT 702 · Technitium Secondary</text>
+<text x="78" y="263" class="body">DNS + DHCP for all five VLANs</text><text x="679" y="263" class="body">DNS only · no DHCP</text>
+<text x="78" y="297" class="small">10.0.0.3 · 10.0.1.110 · …</text><text x="679" y="297" class="small">10.0.0.4 · 10.0.1.111 · …</text>
+<text x="78" y="334" class="small">ZFS replication: every 1 minute →</text><text x="679" y="334" class="small">← ZFS replication: every 5 minutes</text>
+<text x="78" y="369" class="small">HA preferred here</text><text x="679" y="369" class="small">HA preferred here</text>
+<path d="M555 235 H645" class="arrow"/><path d="M634 225 L645 235 L634 245" class="arrow"/>
+<path d="M645 275 H555" class="arrow"/><path d="M566 265 L555 275 L566 285" class="arrow"/>
+<rect x="50" y="464" width="1100" height="87" rx="16" fill="#e6eef8" stroke="#abc2dd"/>
+<text x="78" y="498" class="label">Clients on VLAN0, VLAN10, VLAN20, VLAN30, VLAN40 + WireGuard</text>
+<text x="78" y="527" class="small">Per-network DNS IPs on both servers · blocking selected by source IP · individual kids' device rules</text>
+<path d="M300 462 V403" class="arrow"/><path d="M290 414 L300 403 L310 414" class="arrow"/>
+<path d="M900 462 V403" class="arrow"/><path d="M890 414 L900 403 L910 414" class="arrow"/>
+<rect x="285" y="593" width="630" height="61" rx="13" fill="#ffffff" stroke="#a9b9cd" stroke-width="2"/>
+<text x="600" y="620" text-anchor="middle" class="label">Local blocklist web server via Nginx Proxy Manager</text>
+<text x="600" y="644" text-anchor="middle" class="small">dns-lists.katz.vision → 10.0.0.111</text>
+<path d="M600 592 V553" class="arrow"/><path d="M590 564 L600 553 L610 564" class="arrow"/>
+</svg>
