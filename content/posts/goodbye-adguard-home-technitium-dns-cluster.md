@@ -23,11 +23,11 @@ I run OPNsense as my router and use multiple VLANs to keep the various parts of 
 
 | Network | Old AdGuard address | Purpose |
 |---|---|---|
-| VLAN0 | `10.0.0.2` | Main network |
-| VLAN10 | `10.0.1.2` | Personal devices |
-| VLAN20 | `10.0.2.2` | Separate, essentially unfiltered network |
-| VLAN30 | `10.0.3.2` | Guest network: light ad blocking, clients isolated from each other, and a good fit for the kids' iPads |
-| VLAN40 | `10.0.4.2` | My "Google network": big-tech devices that talk to their cloud services live here |
+| VLAN0 | `192.168.10.2` | Main network |
+| VLAN10 | `192.168.11.2` | Personal devices |
+| VLAN20 | `192.168.12.2` | Separate, essentially unfiltered network |
+| VLAN30 | `192.168.13.2` | Guest network: light ad blocking, clients isolated from each other, and a good fit for the kids' iPads |
+| VLAN40 | `192.168.14.2` | My "Google network": big-tech devices that talk to their cloud services live here |
 
 VLAN30 is my guest network. It gets light ad blocking, and devices on it aren't allowed to talk to each other, which made it the natural home for the kids' iPads. VLAN40 is where anything from big tech that constantly phones home to a cloud service ends up, so it gets its own filtering rules.
 
@@ -52,39 +52,39 @@ Both Technitium instances serve DNS. CT 701 is the only DHCP server; CT 702 is n
 
 I created two Debian 13 LXCs running Technitium DNS Server 15.6.2. Each has two CPU cores, 2 GB of RAM, and a 16 GB ZFS-backed root disk.
 
-- **CT 701**, `technitium-1`, on BEAST, runs DNS and DHCP.
-- **CT 702**, `technitium-2`, on pve-attic-backup, runs DNS only.
+- **CT 701**, `technitium-1`, on PVE-MAIN, runs DNS and DHCP.
+- **CT 702**, `technitium-2`, on pve-backup, runs DNS only.
 
 Both Proxmox hosts have the bridges `vmbr0`, `vmbr10`, `vmbr20`, `vmbr30`, and `vmbr40`. Each container has a virtual NIC on every bridge, so it can serve all five VLANs directly.
 
 | Network | CT 701 | CT 702 |
 |---|---|---|
-| VLAN0 | `10.0.0.3` | `10.0.0.4` |
-| VLAN10 | `10.0.1.110` | `10.0.1.111` |
-| VLAN20 | `10.0.2.110` | `10.0.2.111` |
-| VLAN30 | `10.0.3.110` | `10.0.3.111` |
-| VLAN40 | `10.0.4.110` | `10.0.4.111` |
+| VLAN0 | `192.168.10.3` | `192.168.10.4` |
+| VLAN10 | `192.168.11.110` | `192.168.11.111` |
+| VLAN20 | `192.168.12.110` | `192.168.12.111` |
+| VLAN30 | `192.168.13.110` | `192.168.13.111` |
+| VLAN40 | `192.168.14.110` | `192.168.14.111` |
 
 That distinction matters: these are ten IP addresses, but only two DNS servers.
 
-For reference, this is part of the actual Proxmox configuration for CT 701:
+For reference, this is part of the Proxmox configuration for CT 701, with the addresses changed for this post:
 
 ```ini
 arch: amd64
 cores: 2
 hostname: technitium-1
 memory: 2048
-nameserver: 10.0.0.3
-net0: name=eth0,bridge=vmbr0,gw=10.0.0.1,ip=10.0.0.3/24,type=veth
-net1: name=eth1,bridge=vmbr10,ip=10.0.1.110/24,type=veth
-net2: name=eth2,bridge=vmbr20,ip=10.0.2.110/24,type=veth
-net3: name=eth3,bridge=vmbr30,ip=10.0.3.110/24,type=veth
-net4: name=eth4,bridge=vmbr40,ip=10.0.4.110/24,type=veth
+nameserver: 192.168.10.3
+net0: name=eth0,bridge=vmbr0,gw=192.168.10.1,hwaddr=02:5A:C3:11:70:01,ip=192.168.10.3/24,type=veth
+net1: name=eth1,bridge=vmbr10,hwaddr=02:5A:C3:11:70:02,ip=192.168.11.110/24,type=veth
+net2: name=eth2,bridge=vmbr20,hwaddr=02:5A:C3:11:70:03,ip=192.168.12.110/24,type=veth
+net3: name=eth3,bridge=vmbr30,hwaddr=02:5A:C3:11:70:04,ip=192.168.13.110/24,type=veth
+net4: name=eth4,bridge=vmbr40,hwaddr=02:5A:C3:11:70:05,ip=192.168.14.110/24,type=veth
 rootfs: local-zfs:subvol-701-disk-0,size=16G
 unprivileged: 1
 ```
 
-I omitted the interface MAC addresses here because they're specific to my containers. The key is that each interface belongs to the corresponding Proxmox bridge.
+The MAC addresses are made up too. The key is that each interface belongs to the corresponding Proxmox bridge.
 
 ## Clustering the DNS Servers
 
@@ -101,10 +101,10 @@ I wanted Technitium to resolve DNS recursively using the root DNS servers rather
 This initially ran into an old OPNsense DNS redirection rule. Once that was corrected, both Technitium instances could perform recursive lookups. I also checked that DNSSEC validation was doing something useful:
 
 ```bash
-dig @10.0.0.3 example.com A +short
-dig @10.0.0.4 example.com A +short
+dig @192.168.10.3 example.com A +short
+dig @192.168.10.4 example.com A +short
 
-dig @10.0.0.3 dnssec-failed.org A +noall +comments
+dig @192.168.10.3 dnssec-failed.org A +noall +comments
 ```
 
 The intentionally broken DNSSEC domain returned `SERVFAIL`, as it should. It isn't a perfect security audit, but it's a better test than simply checking whether Google resolves.
@@ -119,13 +119,13 @@ The new DHCP scopes are:
 
 | Network | DHCP pool | Gateway | DNS servers handed to clients |
 |---|---|---|---|
-| VLAN0 | `10.0.0.30–254` | `10.0.0.1` | `.3`, `.4` |
-| VLAN10 | `10.0.1.2–254` | `10.0.1.1` | `.110`, `.111` |
-| VLAN20 | `10.0.2.3–100` | `10.0.2.1` | `.110`, `.111` |
-| VLAN30 | `10.0.3.3–100` | `10.0.3.1` | `.110`, `.111` |
-| VLAN40 | `10.0.4.3–100` | `10.0.4.1` | `.110`, `.111` |
+| VLAN0 | `192.168.10.30–254` | `192.168.10.1` | `.3`, `.4` |
+| VLAN10 | `192.168.11.2–254` | `192.168.11.1` | `.110`, `.111` |
+| VLAN20 | `192.168.12.3–100` | `192.168.12.1` | `.110`, `.111` |
+| VLAN30 | `192.168.13.3–100` | `192.168.13.1` | `.110`, `.111` |
+| VLAN40 | `192.168.14.3–100` | `192.168.14.1` | `.110`, `.111` |
 
-In the last column, `.110` and `.111` mean the corresponding VLAN's full addresses. For example, `10.0.3.110` and `10.0.3.111` on VLAN30.
+In the last column, `.110` and `.111` mean the corresponding VLAN's full addresses. For example, `192.168.13.110` and `192.168.13.111` on VLAN30.
 
 I used 24-hour leases and disabled automatic DNS registration from DHCP. I also made sure existing infrastructure addresses, including the new DNS servers and old AdGuard hosts, wouldn't be handed out accidentally.
 
@@ -202,7 +202,7 @@ networks:
 
 Here `zzzz` is the existing Docker network attached to Nginx Proxy Manager, not a special name required by Technitium. A plain static-file nginx configuration is all the container needs.
 
-Nginx Proxy Manager exposes the lists at `https://dns-lists.home.example/`, forwarding to `technitium-lists:80` with a valid HTTPS certificate. Both Technitium servers have an internal DNS record resolving `dns-lists.home.example` to `10.0.0.111`, the proxy's address.
+Nginx Proxy Manager exposes the lists at `https://dns-lists.home.example/`, forwarding to `technitium-lists:80` with a valid HTTPS certificate. Both Technitium servers have an internal DNS record resolving `dns-lists.home.example` to `192.168.10.111`, the proxy's address.
 
 I learned the hard way that the host OS resolver is not necessarily the DNS server you think you're testing. My laptop and Docker host initially resolved the list hostname to a public Cloudflare address rather than my internal reverse proxy. That produced a Cloudflare 403 instead of the list.
 
@@ -210,13 +210,13 @@ To test the local proxy directly, without relying on the client's resolver:
 
 ```bash
 curl --noproxy '*' \
-  --resolve dns-lists.home.example:443:10.0.0.111 \
+  --resolve dns-lists.home.example:443:192.168.10.111 \
   https://dns-lists.home.example/vlan10.txt | wc -l
 ```
 
 The VLAN10 file returned 800 lines, including its comment/header line. Both Technitium LXCs could also fetch the file normally after I corrected their container DNS resolver settings.
 
-One easy-to-miss detail: CT 702 was still using OPNsense (`10.0.0.1`) as its Linux system resolver. Technitium's own DNS responses were correct, but commands such as `curl` inside the LXC resolved the internal hostname incorrectly. Setting its Proxmox `nameserver` to `10.0.0.4` and restarting the container fixed that.
+One easy-to-miss detail: CT 702 was still using OPNsense (`192.168.10.1`) as its Linux system resolver. Technitium's own DNS responses were correct, but commands such as `curl` inside the LXC resolved the internal hostname incorrectly. Setting its Proxmox `nameserver` to `192.168.10.4` and restarting the container fixed that.
 
 ### Advanced Blocking: One Policy Per Network
 
@@ -228,19 +228,19 @@ Here's an excerpt of the mapping I actually ended up using:
 {
   "localEndPointGroupMap": {},
   "networkGroupMap": {
-    "10.0.0.0/24": "vlan0",
-    "10.0.1.0/24": "vlan10",
-    "10.0.2.0/24": "vlan20",
-    "10.0.3.0/24": "vlan30",
-    "10.0.4.0/24": "vlan40",
-    "10.0.3.65": "kids-ipads",
-    "10.0.3.66": "kids-ipads",
-    "10.8.0.0/24": "vlan10",
-    "10.8.0.5": "vlan20",
-    "10.8.0.6": "kids-ipads",
-    "10.8.0.13": "kids-ipads",
-    "10.8.0.14": "kids-ipads",
-    "10.8.0.16": "vlan0",
+    "192.168.10.0/24": "vlan0",
+    "192.168.11.0/24": "vlan10",
+    "192.168.12.0/24": "vlan20",
+    "192.168.13.0/24": "vlan30",
+    "192.168.14.0/24": "vlan40",
+    "192.168.13.65": "kids-ipads",
+    "192.168.13.66": "kids-ipads",
+    "172.20.8.0/24": "vlan10",
+    "172.20.8.5": "vlan20",
+    "172.20.8.6": "kids-ipads",
+    "172.20.8.13": "kids-ipads",
+    "172.20.8.14": "kids-ipads",
+    "172.20.8.16": "vlan0",
     "0.0.0.0/0": "default",
     "[::]/0": "default"
   }
@@ -281,7 +281,7 @@ One advantage of this setup is that I can change the group for a single device s
 
 ### A Nice Little WireGuard Complication
 
-I use WireGuard to connect back to the house when I'm away, with tunnel addresses in `10.8.0.0/24`.
+I use WireGuard to connect back to the house when I'm away, with tunnel addresses in `172.20.8.0/24`.
 
 Initially I wanted the blocking policy to depend on which DNS destination the VPN client selected. In other words, send a request to the DNS server's VLAN0 address for VLAN0 filtering, or to its VLAN10 address for VLAN10 filtering. This sounds simple until you remember that I don't want that behavior for everyone on the local network.
 
@@ -298,8 +298,8 @@ This policy depends on Technitium seeing the actual WireGuard source IP. If OPNs
 The `dig` response tells you not just whether a domain is blocked, but which group and list blocked it:
 
 ```bash
-dig @10.0.0.3 snapchat.com A +noall +comments
-dig @10.0.0.4 snapchat.com A +noall +comments
+dig @192.168.10.3 snapchat.com A +noall +comments
+dig @192.168.10.4 snapchat.com A +noall +comments
 ```
 
 From a VLAN10 client, both servers returned `NXDOMAIN` with an extended DNS error containing something like:
@@ -316,28 +316,28 @@ That is far more useful than simply seeing `NXDOMAIN`. It proves that the source
 
 ## Now Make It Survive a Proxmox Host Failure
 
-At this point, DNS was redundant, but my primary DHCP service was still sitting on one Proxmox host. If BEAST died, the secondary DNS server would keep resolving queries, but nothing would issue new DHCP leases until the primary came back.
+At this point, DNS was redundant, but my primary DHCP service was still sitting on one Proxmox host. If PVE-MAIN died, the secondary DNS server would keep resolving queries, but nothing would issue new DHCP leases until the primary came back.
 
 I already have a four-node Proxmox cluster with a qdevice:
 
-- **beast**: one of the more capable machines.
-- **pve-attic-backup**: another capable machine, physically elsewhere in the house.
-- **pve** and **adguard-pve-2**: weaker machines I didn't want running these containers unless I deliberately changed the plan.
+- **pve-main**: one of the more capable machines.
+- **pve-backup**: another capable machine, physically elsewhere in the house.
+- **pve-lite-1** and **pve-lite-2**: weaker machines I didn't want running these containers unless I deliberately changed the plan.
 
-The important difference between these four boxes is that BEAST and pve-attic-backup both have `local-zfs` storage and all five required network bridges. The two Technitium containers use ZFS-backed disks, so Proxmox replication is a good fit.
+The important difference between these four boxes is that PVE-MAIN and pve-backup both have `local-zfs` storage and all five required network bridges. The two Technitium containers use ZFS-backed disks, so Proxmox replication is a good fit.
 
 ### Replicate the Container Disks
 
-On BEAST I created the primary container's replication job:
+On PVE-MAIN I created the primary container's replication job:
 
 ```bash
-pvesr create-local-job 701-0 pve-attic-backup --schedule '*/1'
+pvesr create-local-job 701-0 pve-backup --schedule '*/1'
 ```
 
-And on pve-attic-backup:
+And on pve-backup:
 
 ```bash
-pvesr create-local-job 702-0 beast --schedule '*/5'
+pvesr create-local-job 702-0 pve-main --schedule '*/5'
 ```
 
 The first job replicates CT 701 every minute; the other replicates CT 702 every five minutes. I waited for both to complete an initial successful synchronization before enabling HA.
@@ -370,27 +370,27 @@ Then I added strict node-affinity rules:
 ```bash
 ha-manager rules add node-affinity technitium-701 \
   --resources ct:701 \
-  --nodes 'beast:2,pve-attic-backup:1' \
+  --nodes 'pve-main:2,pve-backup:1' \
   --strict 1
 
 ha-manager rules add node-affinity technitium-702 \
   --resources ct:702 \
-  --nodes 'pve-attic-backup:2,beast:1' \
+  --nodes 'pve-backup:2,pve-main:1' \
   --strict 1
 ```
 
-This makes BEAST the preferred host for CT 701 and pve-attic-backup the preferred host for CT 702. Either one is allowed to run on the other machine if necessary. The strict rule excludes the weaker hosts from running them.
+This makes PVE-MAIN the preferred host for CT 701 and pve-backup the preferred host for CT 702. Either one is allowed to run on the other machine if necessary. The strict rule excludes the weaker hosts from running them.
 
 The relevant part of `/etc/pve/ha/rules.cfg` now looks like:
 
 ```ini
 node-affinity: technitium-701
-        nodes beast:2,pve-attic-backup:1
+        nodes pve-main:2,pve-backup:1
         resources ct:701
         strict 1
 
 node-affinity: technitium-702
-        nodes beast:1,pve-attic-backup:2
+        nodes pve-main:1,pve-backup:2
         resources ct:702
         strict 1
 ```
@@ -401,52 +401,52 @@ node-affinity: technitium-702
 
 Of course, a configuration that looks correct is not quite the same thing as a configuration that works.
 
-I decided to migrate CT 702 to BEAST and back. It's the secondary DNS server, so briefly interrupting it wouldn't take away the primary DHCP service.
+I decided to migrate CT 702 to PVE-MAIN and back. It's the secondary DNS server, so briefly interrupting it wouldn't take away the primary DHCP service.
 
 My first attempt was rejected:
 
 ```bash
-ha-manager migrate ct:702 beast
+ha-manager migrate ct:702 pve-main
 ```
 
 ```text
-cannot migrate resource 'ct:702' to node 'beast'
-- resource 'ct:702' not allowed on target node 'beast'
+cannot migrate resource 'ct:702' to node 'pve-main'
+- resource 'ct:702' not allowed on target node 'pve-main'
 ```
 
-This was confusing because BEAST was explicitly in the list of allowed hosts. The problem turned out to be failback. With automatic failback enabled, Proxmox wouldn't accept a manual migration to the lower-priority host while the higher-priority host was still healthy.
+This was confusing because PVE-MAIN was explicitly in the list of allowed hosts. The problem turned out to be failback. With automatic failback enabled, Proxmox wouldn't accept a manual migration to the lower-priority host while the higher-priority host was still healthy.
 
 Temporarily disabling failback fixed it:
 
 ```bash
 ha-manager set ct:702 --failback 0
-ha-manager migrate ct:702 beast
+ha-manager migrate ct:702 pve-main
 ```
 
 After the migration completed, the output was:
 
 ```text
-service ct:701 (beast, started)
-service ct:702 (beast, started)
+service ct:701 (pve-main, started)
+service ct:702 (pve-main, started)
 ```
 
 And, more importantly:
 
 ```bash
-dig @10.0.0.4 example.com +short
-dig @10.0.0.4 snapchat.com +noall +comments
+dig @192.168.10.4 example.com +short
+dig @192.168.10.4 snapchat.com +noall +comments
 ```
 
 Both tests worked. The secondary kept its IP address even though its underlying Proxmox host had changed. It could still resolve public domains, and the blocked Snapchat request identified the expected VLAN0 blocklist. That was an actual functional test, not just a green check mark in Proxmox.
 
-I then returned CT 702 to pve-attic-backup and restored failback:
+I then returned CT 702 to pve-backup and restored failback:
 
 ```bash
-ha-manager migrate ct:702 pve-attic-backup
+ha-manager migrate ct:702 pve-backup
 ha-manager set ct:702 --failback 1
 ```
 
-The final HA state showed CT 701 running on BEAST and CT 702 on pve-attic-backup.
+The final HA state showed CT 701 running on PVE-MAIN and CT 702 on pve-backup.
 
 I did not deliberately kill a Proxmox host, and I did not run a migration test for CT 701. The tested result is a successful controlled relocation of the DNS-only container. Automatic recovery after a hard host failure still depends on quorum, fencing, and an available replicated snapshot.
 
@@ -460,10 +460,10 @@ I already use Uptime Kuma. I created DNS monitors that query an internal hostnam
 |---|---|---|
 | Type | DNS | DNS |
 | Hostname | `dns-lists.home.example` | `dns-lists.home.example` |
-| Resolver | `10.0.0.3` | `10.0.0.4` |
+| Resolver | `192.168.10.3` | `192.168.10.4` |
 | Port | `53` | `53` |
 | Record type | `A` | `A` |
-| Expected answer | `10.0.0.111` | `10.0.0.111` |
+| Expected answer | `192.168.10.111` | `192.168.10.111` |
 | Interval | 60 seconds | 60 seconds |
 
 This tests much more than whether port 53 is open: the server must actually return the expected internal record. I can add public-recursion checks and web-interface checks separately if I want more detail.
