@@ -11,7 +11,7 @@ tag = ["home lab", "dns", "technitium", "proxmox", "adguard", "opnsense"]
 
 For the past several years, I've been using AdGuard Home for DNS, ad blocking, and DHCP on my home network. I have five VLANs, and at some point this turned into five separate AdGuard Home instances. One for each network, each with its own settings, blocklists, and DHCP reservations.
 
-It worked. Mostly. But whenever I wanted to make a change, I had to remember which instance was responsible for what. I had also managed to build several different sets of blocking rules, including a custom list for my kids' iPads. Having five servers that all do essentially the same thing started to feel a little ridiculous.
+It worked. Mostly. Under heavy use, though, I kept getting AdGuard dropouts: lookups that stalled for a moment and made the whole connection feel unstable, even when the internet itself was fine. And whenever I wanted to make a change, I had to remember which instance was responsible for what. I had also managed to build several different sets of blocking rules, including a custom list for my kids' iPads. Having five servers that all do essentially the same thing started to feel a little ridiculous.
 
 Naturally, I decided to solve this by building a DNS cluster, migrating DHCP for five networks, creating my own blocklist web server, and putting the whole thing under Proxmox high availability. Definitely the simplest way to spend a weekend.
 
@@ -26,8 +26,10 @@ I run OPNsense as my router and use multiple VLANs to keep the various parts of 
 | VLAN0 | `10.0.0.2` | Main network |
 | VLAN10 | `10.0.1.2` | Personal devices |
 | VLAN20 | `10.0.2.2` | Separate, essentially unfiltered network |
-| VLAN30 | `10.0.3.2` | Another network, including the kids' iPads |
-| VLAN40 | `10.0.4.2` | Devices with their own filtering requirements |
+| VLAN30 | `10.0.3.2` | Guest network: light ad blocking, clients isolated from each other, and a good fit for the kids' iPads |
+| VLAN40 | `10.0.4.2` | My "Google network": big-tech devices that talk to their cloud services live here |
+
+VLAN30 is my guest network. It gets light ad blocking, and devices on it aren't allowed to talk to each other, which made it the natural home for the kids' iPads. VLAN40 is where anything from big tech that constantly phones home to a cloud service ends up, so it gets its own filtering rules.
 
 The annoying part wasn't really DNS. It was DHCP reservations, different filtering policies, and the fact that some clients had special rules that didn't apply to the rest of their VLAN.
 
@@ -86,7 +88,7 @@ I omitted the interface MAC addresses here because they're specific to my contai
 
 ## Clustering the DNS Servers
 
-Technitium has built-in DNS clustering. I set the servers up as `ns1.dns-cluster.katz.vision` and `ns2.dns-cluster.katz.vision`. The cluster synchronizes my local zones; there are 15 of them in the catalog, including the internal records I use for my various services.
+Technitium has built-in DNS clustering. I set the servers up as `ns1.dns-cluster.home.example` and `ns2.dns-cluster.home.example`. The cluster synchronizes my local zones; there are 15 of them in the catalog, including the internal records I use for my various services.
 
 I also kept split-horizon local DNS behavior, so internal names can resolve differently depending on the client network where appropriate.
 
@@ -170,7 +172,7 @@ My main server already runs Docker and Nginx Proxy Manager. I created a tiny ngi
 The files live at:
 
 ```text
-/home/jonathan/docker/technitium-lists/
+/opt/docker/technitium-lists/
 ├── lists/
 │   ├── vlan0.txt
 │   ├── vlan10.txt
@@ -188,8 +190,8 @@ services:
     container_name: technitium-lists
     restart: unless-stopped
     volumes:
-      - /home/jonathan/docker/technitium-lists/lists:/usr/share/nginx/html:ro
-      - /home/jonathan/docker/technitium-lists/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /opt/docker/technitium-lists/lists:/usr/share/nginx/html:ro
+      - /opt/docker/technitium-lists/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - zzzz
 
@@ -200,7 +202,7 @@ networks:
 
 Here `zzzz` is the existing Docker network attached to Nginx Proxy Manager, not a special name required by Technitium. A plain static-file nginx configuration is all the container needs.
 
-Nginx Proxy Manager exposes the lists at `https://dns-lists.katz.vision/`, forwarding to `technitium-lists:80` with a valid HTTPS certificate. Both Technitium servers have an internal DNS record resolving `dns-lists.katz.vision` to `10.0.0.111`, the proxy's address.
+Nginx Proxy Manager exposes the lists at `https://dns-lists.home.example/`, forwarding to `technitium-lists:80` with a valid HTTPS certificate. Both Technitium servers have an internal DNS record resolving `dns-lists.home.example` to `10.0.0.111`, the proxy's address.
 
 I learned the hard way that the host OS resolver is not necessarily the DNS server you think you're testing. My laptop and Docker host initially resolved the list hostname to a public Cloudflare address rather than my internal reverse proxy. That produced a Cloudflare 403 instead of the list.
 
@@ -208,8 +210,8 @@ To test the local proxy directly, without relying on the client's resolver:
 
 ```bash
 curl --noproxy '*' \
-  --resolve dns-lists.katz.vision:443:10.0.0.111 \
-  https://dns-lists.katz.vision/vlan10.txt | wc -l
+  --resolve dns-lists.home.example:443:10.0.0.111 \
+  https://dns-lists.home.example/vlan10.txt | wc -l
 ```
 
 The VLAN10 file returned 800 lines, including its comment/header line. Both Technitium LXCs could also fetch the file normally after I corrected their container DNS resolver settings.
@@ -233,12 +235,12 @@ Here's an excerpt of the mapping I actually ended up using:
     "10.0.4.0/24": "vlan40",
     "10.0.3.65": "kids-ipads",
     "10.0.3.66": "kids-ipads",
-    "172.22.168.0/24": "vlan10",
-    "172.22.168.5": "vlan20",
-    "172.22.168.6": "kids-ipads",
-    "172.22.168.13": "kids-ipads",
-    "172.22.168.14": "kids-ipads",
-    "172.22.168.16": "vlan0",
+    "10.8.0.0/24": "vlan10",
+    "10.8.0.5": "vlan20",
+    "10.8.0.6": "kids-ipads",
+    "10.8.0.13": "kids-ipads",
+    "10.8.0.14": "kids-ipads",
+    "10.8.0.16": "vlan0",
     "0.0.0.0/0": "default",
     "[::]/0": "default"
   }
@@ -260,7 +262,7 @@ The `vlan20` and `default` groups have blocking disabled. The `kids-ipads` group
   "blocked": [],
   "allowListUrls": [],
   "blockListUrls": [
-    "https://dns-lists.katz.vision/kids-ipads.txt"
+    "https://dns-lists.home.example/kids-ipads.txt"
   ],
   "allowedRegex": [],
   "blockedRegex": [],
@@ -279,7 +281,7 @@ One advantage of this setup is that I can change the group for a single device s
 
 ### A Nice Little WireGuard Complication
 
-I use WireGuard to connect back to the house when I'm away, with tunnel addresses in `172.22.168.0/24`.
+I use WireGuard to connect back to the house when I'm away, with tunnel addresses in `10.8.0.0/24`.
 
 Initially I wanted the blocking policy to depend on which DNS destination the VPN client selected. In other words, send a request to the DNS server's VLAN0 address for VLAN0 filtering, or to its VLAN10 address for VLAN10 filtering. This sounds simple until you remember that I don't want that behavior for everyone on the local network.
 
@@ -306,7 +308,7 @@ From a VLAN10 client, both servers returned `NXDOMAIN` with an extended DNS erro
 EDE: 15 (Blocked):
 (source=advanced-blocking-app;
  group=vlan10;
- blockListUrl=https://dns-lists.katz.vision/vlan10.txt;
+ blockListUrl=https://dns-lists.home.example/vlan10.txt;
  domain=snapchat.com)
 ```
 
@@ -457,7 +459,7 @@ I already use Uptime Kuma. I created DNS monitors that query an internal hostnam
 | Setting | Primary | Secondary |
 |---|---|---|
 | Type | DNS | DNS |
-| Hostname | `dns-lists.katz.vision` | `dns-lists.katz.vision` |
+| Hostname | `dns-lists.home.example` | `dns-lists.home.example` |
 | Resolver | `10.0.0.3` | `10.0.0.4` |
 | Port | `53` | `53` |
 | Record type | `A` | `A` |
