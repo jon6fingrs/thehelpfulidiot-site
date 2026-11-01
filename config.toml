@@ -193,7 +193,10 @@ mapping = "slug"
 strict_title_matching = 1
 enable_reactions = 1
 comment_box_above_comments = false
-light_theme = "noborder_light"
-dark_theme = "noborder_dark"
+# Site themes in static/giscus/ (giscus's noborder themes recoloured to the
+# teal skin and pinned to the site's light/dark mode, not the phone's).
+# static/js/giscus.min.js turns these paths into the full URLs giscus needs.
+light_theme = "giscus/light.css"
+dark_theme = "giscus/dark.css"
 lang = ""
 lazy_loading = true

@@ -1,0 +1,40 @@
+/* giscus theme for the light site theme.
+   Loaded by giscus inside its iframe (config.toml: extra.giscus.light_theme,
+   resolved to a full URL by static/js/giscus.min.js). Starts from giscus's
+   own noborder_light and swaps in tabi's teal skin, backgrounds and font.
+
+   color-scheme matters: giscus's page declares "light dark", so without this
+   line the iframe follows the phone's setting instead of the site's and
+   paints a white/black block behind the comments when the two differ. */
+@import url("https://giscus.app/themes/noborder_light.css");
+
+@font-face {
+    font-family: "Inter";
+    font-display: swap;
+    src: url("../fonts/Inter4.woff2") format("woff2");
+}
+
+:root { color-scheme: light; }
+
+main {
+    font-family: Inter, Helvetica, Arial, sans-serif;
+
+    --primary-default: 8, 126, 150;           /* tabi teal #087e96 */
+    --bg-default: 240, 240, 240;              /* tabi --bg-0 */
+
+    --color-fg-default: #222226;              /* tabi --text-color */
+    --color-fg-muted: #5b5b65;                /* tabi --meta-color */
+    --color-fg-subtle: #5b5b65;
+    --color-canvas-default: #ffffff;          /* tabi --background-color */
+    --color-canvas-overlay: #ffffff;
+
+    --color-btn-primary-bg: rgba(var(--primary-default), 1);
+    --color-btn-primary-border: rgba(var(--primary-default), 1);
+    --color-btn-primary-hover-bg: rgba(var(--primary-default), 0.88);
+    --color-btn-primary-hover-border: rgba(var(--primary-default), 0.88);
+    --color-btn-primary-selected-bg: rgba(var(--primary-default), 0.88);
+    --color-btn-primary-disabled-bg: rgba(var(--primary-default), 0.5);
+    --color-btn-primary-disabled-border: rgba(var(--primary-default), 0.5);
+    --color-accent-fg: rgba(var(--primary-default), 1);
+    --color-accent-emphasis: rgba(var(--primary-default), 1);
+}
