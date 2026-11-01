@@ -11,7 +11,7 @@ tag = ["home lab", "dns", "technitium", "proxmox", "adguard", "opnsense"]
 
 For the past several years, I've been using AdGuard Home for DNS, ad blocking, and DHCP on my home network. I have five VLANs, and at some point this turned into five separate AdGuard Home instances. One for each network, each with its own settings, blocklists, and DHCP reservations.
 
-It worked. Mostly. Under heavy use, though, I kept getting AdGuard dropouts: lookups that stalled for a moment and made the whole connection feel unstable, even when the internet itself was fine. And whenever I wanted to make a change, I had to remember which instance was responsible for what. I had also managed to build several different sets of blocking rules, including a custom list for my kids' iPads. Having five servers that all do essentially the same thing started to feel a little ridiculous.
+It worked. Mostly. Under heavy use, though, I kept getting AdGuard dropouts: lookups that stalled for a moment and made the whole connection feel unstable, even when the internet itself was fine. It probably didn't help that each VLAN had a single DNS server with no redundancy: if that one instance hiccuped, every device on the network felt it. And whenever I wanted to make a change, I had to remember which instance was responsible for what. I had also managed to build several different sets of blocking rules, including a custom list for my kids' iPads. Having five servers that all do essentially the same thing started to feel a little ridiculous.
 
 Naturally, I decided to solve this by building a DNS cluster, migrating DHCP for five networks, creating my own blocklist web server, and putting the whole thing under Proxmox high availability. Definitely the simplest way to spend a weekend.
 
