@@ -133,6 +133,20 @@ purpose to outrank its SCSS specificity; keep that when editing.
   Assistant projects) are not a series. When a draft looks like it belongs with
   an older post, say so and ask before turning it into a series. Done for the
   wall tablet dashboard posts (`content/series/wall-tablet-dashboards/`).
+- **Affiliate links.** While drafting or editing a post, suggest products
+  worth linking, and say why each one helps a reader. Do this as part of
+  writing the post, without waiting to be asked. Only suggest the exact
+  hardware the owner used and named in the post; never link a substitute or a
+  "similar" item. Keep it restrained: no inline links mid-paragraph just for
+  the commission, no banners, no buttons. One `## Links` section at the end
+  in the existing format (Associates disclosure line in italics, then
+  `**Product:** [affiliate link](...) · [non-affiliate link](...)`). In a
+  series, put it only on the posts that actually name the product. The owner
+  makes affiliate links in their own Associates account (SiteStripe); never
+  invent links or ASINs. The non-affiliate link is a clean
+  `https://www.amazon.com/dp/<ASIN>`. Products bought from a maker's own store
+  (e.g. Athom) get a plain link, or none, with no disclosure needed. Add any
+  new shortener domain to `skip_prefixes` in `config.toml`.
 - `updated =` only for real revisions. Many posts carry a bulk 2024-04 date
   from WordPress; listings show only `date` for that reason.
 

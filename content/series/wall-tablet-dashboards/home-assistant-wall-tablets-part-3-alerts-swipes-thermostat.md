@@ -149,3 +149,9 @@ The change I'm happiest with is the one that removed alerts. A banner that goes 
 If you want the details on any of these cards, let me know in the comments.
 
 Thanks for reading.
+
+## Links
+
+*As an Amazon Associate I earn from qualifying purchases. The non-affiliate link goes to the same product if you'd rather not use mine.*
+
+**Amazon Fire HD 10 (13th generation), the current version of my wall tablets:** [affiliate link](https://link.amazon/B04vhqvsV) · [non-affiliate link](https://www.amazon.com/dp/B0GVTPKJVT)

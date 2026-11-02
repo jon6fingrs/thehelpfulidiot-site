@@ -69,6 +69,8 @@ external_level = "warn"
 skip_anchor_prefixes = ["https://github.com/"]
 skip_prefixes = [
     "https://amzn.to",                 # affiliate shorteners rate-limit checkers
+    "https://link.amazon",
+    "https://a.co",
     "https://s.click.aliexpress.com",
 ]
 # Removed: "https://synology.regester.lan" — the six LAN-only image URLs it

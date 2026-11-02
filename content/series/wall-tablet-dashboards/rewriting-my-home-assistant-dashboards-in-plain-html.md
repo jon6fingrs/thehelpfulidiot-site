@@ -177,3 +177,9 @@ Would I tell everyone to do this? Probably not. Lovelace is still the right answ
 Let me know in the comments if you'd like me to go deeper on any of these cards, or the intercom.
 
 Thanks for reading.
+
+## Links
+
+*As an Amazon Associate I earn from qualifying purchases. The non-affiliate link goes to the same product if you'd rather not use mine.*
+
+**Amazon Fire HD 10 (13th generation), the current version of my wall tablets:** [affiliate link](https://link.amazon/B04vhqvsV) · [non-affiliate link](https://www.amazon.com/dp/B0GVTPKJVT)
