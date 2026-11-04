@@ -2,21 +2,21 @@
 title = "Turning a Google TV Box into an Ad-Free Streamer and Family Photo Frame"
 date = 2026-11-04
 path = "cleaning-up-a-google-tv-box-with-cleanyourtv"
-description = "How I used the open-source cleanyourtv project and Claude Code to strip the ads and telemetry off a Xiaomi TV Box S, then added Jellyfin, a photo screensaver from Immich, remapped remote buttons, Home Assistant control and an ESP32 Bluetooth keyboard."
+description = "How I used the open-source cleanyourtv project and Claude Code to strip the ads and telemetry off a used Xiaomi TV Box S, then added Jellyfin, a photo screensaver from Immich, remapped remote buttons, Home Assistant control and an ESP32 Bluetooth keyboard that wakes the box."
 
 [taxonomies]
 category = ["Self Hosting"]
 tag = ["android tv", "claude", "home assistant", "immich", "jellyfin", "esp32"]
 +++
 
-I was listening to [LINUX Unplugged episode 690](https://linuxunplugged.com/690) ("The S in PHP is for Security") when they mentioned [cleanyourtv](https://github.com/Gathin23/cleanyourtv), an open-source project that promises to "debloat any Android or Google TV over Wi-Fi and get an Apple TV-style home." They linked the box they used, a [Xiaomi TV Box S (3rd gen)](https://www.amazon.com/Xiaomi-TV-Box-3rd-Gen/dp/B0F3JWFL56), and I bought one.
+I was listening to [LINUX Unplugged episode 690](https://linuxunplugged.com/690) ("The S in PHP is for Security") when they mentioned [cleanyourtv](https://github.com/Gathin23/cleanyourtv), an open-source project that promises to "debloat any Android or Google TV over Wi-Fi and get an Apple TV-style home." They linked the box they used, a [Xiaomi TV Box S (3rd gen)](https://www.amazon.com/Xiaomi-TV-Box-3rd-Gen/dp/B0F3JWFL56), and I picked one up used for under $80.
 
 Out of the box it's a capable little streamer buried under a Google TV home screen full of sponsored rows, plus Xiaomi's own content tabs, promo apps and analytics. About two hours later it was this:
 
 ![Before: a Google TV home screen with a sponsored banner, "Top picks for you" and Xiaomi TV+ rows. After: a clock and a six-app dock with Jellyfin, Netflix, Disney+, Prime Video, Apple TV and YouTube](/img/2026/11/gtv-home-before-after.svg)
 *Roughly what changed. No rows, no recommendations, no ads.*
 
-It also turned out to be a replacement for my old Kodi box's best feature: a screensaver that shows only photos of my kids, pulled from my self-hosted Immich.
+It's also going to replace the Kodi box in my family room. That box has been giving me more and more trouble with video drivers, and with sound whenever the TV turns off and on again. Its best feature was a screensaver that shows only photos of my kids, pulled from my self-hosted Immich, so the new box had to do that too.
 
 ## What I Wanted
 
@@ -155,7 +155,7 @@ It worked, but it could only filter by "last N days" or hide albums. It couldn't
 
 I already run [immich-kiosk](https://github.com/damongolding/immich-kiosk), a web app that shows an Immich slideshow in a browser. It filters by person right in the URL (`?person=...&person=...`) and overlays the date, location and weather. So: can a screensaver just be a web page?
 
-Not directly. Android TV has no "screensaver = URL" setting; a screensaver has to be an app that provides a "dream" service. Rather than install some random "web screensaver" APK, the agent wrote a tiny one: about 1,000 lines of Java, a 27 KB APK.
+Not directly. Android TV has no "screensaver = URL" setting; a screensaver has to be an app that provides a "dream" service. Rather than install some random "web screensaver" APK, the agent wrote a tiny one: about 1,000 lines of Java, a 27 KB APK. It was made for my box in that session and I'm not publishing it, but it's a small enough job that any coding agent can rebuild it from the description below.
 
 ![Flowchart: after 3 minutes idle, load the immich-kiosk page. If it loads within 25 seconds without an HTTP error, show my kids' photos with date, location and weather. If not, show Wikimedia Commons landscape and city photos, and check the kiosk page every 10 minutes to switch back](/img/2026/11/gtv-screensaver-flow.svg)
 
@@ -221,10 +221,10 @@ The fix: re-enable `tv.remote.service`, disable `katniss` again. The ports came 
 
 ## Bonus: An ESP32 as a Bluetooth Keyboard
 
-The Android TV Remote integration works over the network, which means it depends on that one service staying enabled. I wanted a second way in that doesn't, and maybe a way to wake the box from standby. So in a separate session I set up an [M5Stack ATOM Echo](https://docs.m5stack.com/en/atom/atomecho) (a tiny ESP32) as a Bluetooth keyboard using [HomeOps/esphome-blekeyboard](https://github.com/HomeOps/esphome-blekeyboard).
+The Android TV Remote integration and ADB both work over the network, and both stop answering once the box has gone to sleep. The physical remote wakes it over Bluetooth, so I wanted Home Assistant to be able to do the same. So in a separate session I set up an [M5Stack ATOM Echo](https://docs.m5stack.com/en/atom/atomecho) (a tiny ESP32) as a Bluetooth keyboard using [HomeOps/esphome-blekeyboard](https://github.com/HomeOps/esphome-blekeyboard).
 
 ![Three ways to control the box: the physical remote over Bluetooth; Home Assistant through the Android TV Remote service over the network, which also reports what's playing; and Home Assistant through the ATOM Echo acting as a Bluetooth keyboard, which is still being paired](/img/2026/11/gtv-control-paths.svg)
-*The keyboard can only send keys. Knowing what's playing still comes from the network side.*
+*The keyboard sends keys and wakes the box. Knowing what's playing still comes from the network side.*
 
 The ESPHome config is short, because the project ships packages for the keyboard and the media keys:
 
@@ -275,7 +275,7 @@ Getting there was the usual ESPHome adventure:
 - **Updates over the network timed out**, so I downloaded the factory firmware and flashed it over USB with [ESPHome Web](https://web.esphome.io/). The serial log showed the Bluetooth keyboard starting up and advertising.
 - **It wouldn't join one of my Wi-Fi networks** (it saw it but timed out connecting). Pointing it at another one worked right away.
 
-On the box, *Settings → Remotes & Accessories → Pair accessory* found **ESP32 BLE KB** and said "Connecting...". That's where it stands right now. Still to do: finish pairing, test navigation and typing from Home Assistant, and find out whether a Bluetooth keypress can wake the box from standby, which was the main reason for doing this.
+On the box, *Settings → Remotes & Accessories → Pair accessory* found **ESP32 BLE KB** and paired with it. It works well, and it does the one thing I really wanted: **when the box has gone to sleep and Home Assistant's network routes stop answering, a keypress from the ATOM Echo wakes it up.** Once it's awake, the Android TV Remote integration and ADB take over again.
 
 ## What Went Wrong
 
@@ -323,13 +323,15 @@ adb shell settings delete secure screensaver_components
 adb shell pm enable com.google.android.apps.tv.launcherx
 ```
 
-## Before You Call It Done
+## A Word About ADB
 
-One thing is still on my list, and it's the most important one: **turn ADB off**. Network ADB on port 5555 is unencrypted, and anyone on your network who gets past the "Allow debugging?" prompt has full control of the box. When I'm finished tinkering, I'll turn off wireless and USB debugging, revoke the saved authorizations, reboot, and confirm the port is closed with the repo's `tools/adb-closed.py`.
+cleanyourtv's advice is to **turn ADB off when you're done**, and it ships `tools/adb-closed.py` to confirm the port is closed. Network ADB on port 5555 is unencrypted, and anything on your network that gets past the "Allow debugging?" prompt has full control of the box.
+
+I'm leaving it on, because Home Assistant uses it to control the TV. The box sits on an isolated VLAN, so only the devices I allow can reach that port. If you don't need ADB afterwards, close it.
 
 ## Was It Worth It?
 
-Yes. The box boots straight to my apps, the YouTube, Apps and formerly useless Xiaomi TV+ buttons all do something useful, and after 3 minutes it turns into a photo frame of my kids. If my server is down, it shows mountains and cities instead.
+Yes. The box boots straight to my apps, Home Assistant can wake it and control it, the YouTube, Apps and formerly useless Xiaomi TV+ buttons all do something useful, and after 3 minutes it turns into a photo frame of my kids. If my server is down, it shows mountains and cities instead.
 
 If you want to try it, the [Xiaomi TV Box S](https://www.amazon.com/Xiaomi-TV-Box-3rd-Gen/dp/B0F3JWFL56) already has a tested folder in cleanyourtv, which made this much easier than starting from scratch. Thanks to Gathin23 and the [cleanyourtv](https://github.com/Gathin23/cleanyourtv) contributors, epochcoder for the Homelab companion, the Immich, immich-kiosk and Jellyfin folks, the Wikimedia Commons photographers, and the LINUX Unplugged crew for the tip.
 
